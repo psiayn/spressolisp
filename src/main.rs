@@ -1,41 +1,8 @@
+mod ast;
+
 use std::io::{self, Write};
-use std::fmt;
 
-#[derive(Debug, Clone)]
-enum Expr {
-    Atom(Atom),
-    List(List),
-}
-
-#[derive(Debug, Clone)]
-enum Atom {
-    Symbol(String),
-    Number(Number),
-}
-
-#[derive(Debug, Clone)]
-enum Number {
-    Int(i64),
-    Float(f64),
-}
-
-#[derive(Debug, Clone)]
-enum List {
-    Symbol(Vec<String>),
-    Number(Vec<Number>),
-    Expr(Vec<Expr>),
-}
-
-#[derive(Debug, Clone)]
-struct SyntaxError {
-    err: String,
-}
-
-impl fmt::Display for SyntaxError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "Syntax Error: {}", self.err)
-    }
-}
+use crate::ast::{Expr, Atom, Number, SyntaxError, print_ast};
 
 fn main() {
     loop {
@@ -48,8 +15,10 @@ fn main() {
             break;
         }
         let mut tokenized_input: Vec<String> = tokenize(input);
-        let repr = read_from_tokens(&mut tokenized_input);
-        println!("{:?}", repr);
+        match read_from_tokens(&mut tokenized_input) {
+            Ok(ast) => print_ast(ast),
+            Err(e) => println!("{}", e),
+        };
     }
     println!("goodbye!");
 }
@@ -70,6 +39,9 @@ fn read_from_tokens(tokens: &mut Vec<String>) -> Result<Expr, SyntaxError> {
     let token = tokens.remove(0);
     match token.as_str() {
         "(" => {
+           if tokens.len() == 0 {
+               return Err(SyntaxError { err: "'(' not closed".to_string() });
+           }
            let mut ast: Vec<Expr> = Vec::new();
            while tokens[0] != ")" {
                let inner_ast = match read_from_tokens(tokens) {
@@ -77,9 +49,12 @@ fn read_from_tokens(tokens: &mut Vec<String>) -> Result<Expr, SyntaxError> {
                    Err(e) => return Err(e),
                };
                ast.push(inner_ast);
+               if tokens.len() == 0 {
+                   return Err(SyntaxError { err: "'(' not closed".to_string() });
+               }
            }
            tokens.remove(0);
-           return Ok(Expr::List(List::Expr(ast)));
+           return Ok(Expr::List(ast));
         },
         ")" => return Err(SyntaxError { err: "Unexpected ')'".to_string() }),
         _ => Ok(Expr::Atom(atom(token))),
