@@ -29,9 +29,16 @@ impl fmt::Display for SyntaxError {
     }
 }
 
-pub fn print_ast(ast: Expr) {
+fn pretty_ast(ast: Expr, level: usize) {
     match ast {
-        Expr::List(list) => list.into_iter().for_each(|token| print_ast(token)),
-        Expr::Atom(token) => println!("{:?}", token),
+        Expr::List(list) => {
+            println!("{}List", "\t".repeat(level));
+            list.into_iter().for_each(|token| pretty_ast(token, level + 1));
+        },
+        Expr::Atom(token) => println!("{}{:?}", "\t".repeat(level) , token),
     };
+}
+
+pub fn print_ast(ast: Expr) {
+    pretty_ast(ast, 0);
 }
