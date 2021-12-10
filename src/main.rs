@@ -2,7 +2,7 @@ mod ast;
 
 use std::io::{self, Write};
 
-use crate::ast::{Expr, Atom, Number, SyntaxError, print_ast};
+use crate::ast::{Expr, Atom, Number, SyntaxError};
 
 fn main() {
     loop {
@@ -16,7 +16,7 @@ fn main() {
         }
         let mut tokenized_input: Vec<String> = tokenize(input);
         match read_from_tokens(&mut tokenized_input) {
-            Ok(ast) => print_ast(ast),
+            Ok(ast) => println!("{}", ast),
             Err(e) => println!("{}", e),
         };
     }
