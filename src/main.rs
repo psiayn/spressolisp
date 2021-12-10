@@ -37,12 +37,10 @@ fn main() {
 }
 
 fn tokenize(input: String) -> Vec<String> {
-        let input: String = input
-            .replace("(", " ( ")
-            .replace(")", " ) ");
-        let res = input
-            .split_whitespace()
-            .map(|tok| tok.to_string())
-            .collect();
-        return res;
+    let input: String = input.replace("(", " ( ").replace(")", " ) ");
+    let res = input
+        .split_whitespace()
+        .map(|tok| tok.to_string())
+        .collect();
+    return res;
 }

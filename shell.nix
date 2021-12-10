@@ -4,5 +4,6 @@ mkShell {
     rustc
     cargo
     rust-analyzer
+    rustfmt
   ];
 }
