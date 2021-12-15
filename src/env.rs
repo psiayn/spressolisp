@@ -10,6 +10,10 @@ pub fn standard_env() -> HashMap<String, Expr> {
         "+".to_string(),
         Expr::Func(add),
     );
+    env.insert(
+        "*".to_string(),
+        Expr::Func(mul),
+    );
     return env;
 }
 
@@ -17,6 +21,26 @@ fn add(args: Vec<Expr>, env: &mut EnvType) -> Result<Expr, SyntaxError> {
     let res = args.into_iter().try_fold(Number::Int(0), |x, y| {
         match y {
             Expr::Atom(Atom::Number(num)) => Ok(x + num),
+            Expr::List(mut exprs) => match execute(&mut exprs, env) {
+                Ok(res) => match add(vec![Expr::Atom(Atom::Number(x)), res], env) {
+                    Ok(Expr::Atom(Atom::Number(num))) => Ok(num),
+                    _ => Err(SyntaxError{ err: "brrrrrrrr this should not happen".to_string() })
+                },
+                Err(e) => Err(e),
+            },
+            _ => Err(SyntaxError{ err: "TF you adding you retard".to_string() }),
+        }
+    });
+    match res {
+        Ok(result) => Ok(Expr::Atom(Atom::Number(result))),
+        Err(err) => Err(err),
+    }
+}
+
+fn mul(args: Vec<Expr>, env: &mut EnvType) -> Result<Expr, SyntaxError> {
+    let res = args.into_iter().try_fold(Number::Int(1), |x, y| {
+        match y {
+            Expr::Atom(Atom::Number(num)) => Ok(x * num),
             Expr::List(mut exprs) => match execute(&mut exprs, env) {
                 Ok(res) => match add(vec![Expr::Atom(Atom::Number(x)), res], env) {
                     Ok(Expr::Atom(Atom::Number(num))) => Ok(num),

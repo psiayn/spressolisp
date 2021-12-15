@@ -61,6 +61,22 @@ impl std::ops::Add<Number> for Number {
     }
 }
 
+impl std::ops::Mul<Number> for Number {
+    type Output = Number;
+    fn mul(self, rhs: Number) -> Self::Output {
+        match rhs {
+            Number::Float(num) => match self {
+                Number::Float(lhs) => Number::Float(lhs * num),
+                Number::Int(lhs) => Number::Float(lhs as f64 * num),
+            },
+            Number::Int(num) => match self {
+                Number::Float(lhs) => Number::Float(lhs * num as f64),
+                Number::Int(lhs) => Number::Int(lhs * num),
+            },
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct SyntaxError {
     pub err: String,
