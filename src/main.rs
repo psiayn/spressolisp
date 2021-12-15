@@ -1,9 +1,11 @@
 mod ast;
 mod env;
+mod eval;
 
 use std::io::{self, Write};
 
-use crate::{ast::{Expr, Atom, Number, SyntaxError}, env::{execute, standard_env}};
+use crate::{ast::{Expr, Atom, Number, SyntaxError}, env::standard_env};
+use crate::eval::execute;
 
 fn main() {
     loop {
