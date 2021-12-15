@@ -1,10 +1,12 @@
 use std::fmt;
 
-#[derive(Debug, Clone)]
+use crate::env::EnvType;
+
+#[derive(Clone)]
 pub enum Expr {
     Atom(Atom),
     List(Vec<Expr>),
-    Func(fn(Vec<Expr>) -> Result<Expr, SyntaxError>),
+    Func(fn(Vec<Expr>, &mut EnvType) -> Result<Expr, SyntaxError>),
 }
 
 impl fmt::Display for Expr {
@@ -71,12 +73,17 @@ impl fmt::Display for SyntaxError {
 }
 
 fn pretty_ast(ast: &Expr, level: usize, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    // do stuff
+    fn type_name_of<T>(_: T) -> &'static str {
+        std::any::type_name::<T>()
+    }
+
     match ast {
         Expr::List(list) => {
             write!(f, "{}List\n", "\t".repeat(level)).unwrap();
             list.into_iter().map(|token| pretty_ast(token, level + 1, f)).collect()
         },
         Expr::Atom(token) => write!(f, "{}{}\n", "\t".repeat(level), token),
-        Expr::Func(func) => write!(f, "{}{:?}\n", "\t".repeat(level), func),
+        Expr::Func(func) => write!(f, "{}{}\n", "\t".repeat(level), type_name_of(func)),
     }
 }

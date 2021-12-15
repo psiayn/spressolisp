@@ -3,7 +3,7 @@ mod env;
 
 use std::io::{self, Write};
 
-use crate::ast::{Expr, Atom, Number, SyntaxError};
+use crate::{ast::{Expr, Atom, Number, SyntaxError}, env::{execute, standard_env}};
 
 fn main() {
     loop {
@@ -16,8 +16,18 @@ fn main() {
             break;
         }
         let mut tokenized_input: Vec<String> = tokenize(input);
+        let mut global_env = standard_env();
         match read_from_tokens(&mut tokenized_input) {
-            Ok(ast) => println!("{}", ast),
+            Ok(ast) => {
+                println!("{}", ast);
+                match ast {
+                    Expr::List(mut exprs) => match execute(&mut exprs, &mut global_env) {
+                        Ok(e) => println!("{}", e),
+                        Err(e) => println!("{}", e),
+                    },
+                    _ => println!("{}", SyntaxError{err: "Hmm I can't execute something that is not a list".to_string()}),
+                }
+            },
             Err(e) => println!("{}", e),
         };
     }
