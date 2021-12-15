@@ -4,6 +4,7 @@ use std::fmt;
 pub enum Expr {
     Atom(Atom),
     List(Vec<Expr>),
+    Func(fn(Vec<Expr>) -> Result<Expr, SyntaxError>),
 }
 
 impl fmt::Display for Expr {
@@ -42,6 +43,22 @@ impl fmt::Display for Number {
     }
 }
 
+impl std::ops::Add<Number> for Number {
+    type Output = Number;
+    fn add(self, rhs: Number) -> Self::Output {
+        match rhs {
+            Number::Float(num) => match self {
+                Number::Float(lhs) => Number::Float(lhs + num),
+                Number::Int(lhs) => Number::Float(lhs as f64 + num),
+            },
+            Number::Int(num) => match self {
+                Number::Float(lhs) => Number::Float(lhs + num as f64),
+                Number::Int(lhs) => Number::Int(lhs + num),
+            },
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct SyntaxError {
     pub err: String,
@@ -59,6 +76,7 @@ fn pretty_ast(ast: &Expr, level: usize, f: &mut fmt::Formatter<'_>) -> fmt::Resu
             write!(f, "{}List\n", "\t".repeat(level)).unwrap();
             list.into_iter().map(|token| pretty_ast(token, level + 1, f)).collect()
         },
-        Expr::Atom(token) => write!(f, "{}{}\n", "\t".repeat(level) , token),
+        Expr::Atom(token) => write!(f, "{}{}\n", "\t".repeat(level), token),
+        Expr::Func(func) => write!(f, "{}{:?}\n", "\t".repeat(level), func),
     }
 }

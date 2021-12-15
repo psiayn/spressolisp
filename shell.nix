@@ -6,4 +6,8 @@ mkShell {
     rust-analyzer
     rustfmt
   ];
+  shellHook = ''
+    alias run="cargo run"
+    alias build="cargo build"
+  '';
 }
