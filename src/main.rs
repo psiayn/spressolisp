@@ -4,7 +4,7 @@ mod eval;
 
 use std::io::{self, Write};
 
-use crate::{ast::{Expr, Atom, Number, SyntaxError}, env::standard_env};
+use crate::{ast::{Expr, Atom, Number, RuntimeError}, env::standard_env};
 use crate::eval::execute;
 
 fn main() {
@@ -27,7 +27,7 @@ fn main() {
                         Ok(e) => println!("{}", e),
                         Err(e) => println!("{}", e),
                     },
-                    _ => println!("{}", SyntaxError{err: "Hmm I can't execute something that is not a list".to_string()}),
+                    _ => println!("{}", RuntimeError{err: "Hmm I can't execute something that is not a list".to_string()}),
                 }
             },
             Err(e) => println!("{}", e),
@@ -45,15 +45,15 @@ fn tokenize(input: String) -> Vec<String> {
     return res;
 }
 
-fn read_from_tokens(tokens: &mut Vec<String>) -> Result<Expr, SyntaxError> {
+fn read_from_tokens(tokens: &mut Vec<String>) -> Result<Expr, RuntimeError> {
     if tokens.len() == 0 {
-        return Err(SyntaxError { err: "Unexpected EOF".to_string() });
+        return Err(RuntimeError { err: "Unexpected EOF".to_string() });
     }
     let token = tokens.remove(0);
     match token.as_str() {
         "(" => {
            if tokens.len() == 0 {
-               return Err(SyntaxError { err: "'(' not closed".to_string() });
+               return Err(RuntimeError { err: "'(' not closed".to_string() });
            }
            let mut ast: Vec<Expr> = Vec::new();
            while tokens[0] != ")" {
@@ -63,13 +63,13 @@ fn read_from_tokens(tokens: &mut Vec<String>) -> Result<Expr, SyntaxError> {
                };
                ast.push(inner_ast);
                if tokens.len() == 0 {
-                   return Err(SyntaxError { err: "'(' not closed".to_string() });
+                   return Err(RuntimeError { err: "'(' not closed".to_string() });
                }
            }
            tokens.remove(0);
            return Ok(Expr::List(ast));
         },
-        ")" => return Err(SyntaxError { err: "Unexpected ')'".to_string() }),
+        ")" => return Err(RuntimeError { err: "Unexpected ')'".to_string() }),
         _ => Ok(Expr::Atom(atom(token))),
     }
 }

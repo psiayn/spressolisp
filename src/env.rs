@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use crate::ast::Expr;
 
-use crate::eval::{add, mul};
+use crate::eval::{add, mul, sub};
 
 pub type EnvType = HashMap::<String, Expr>;
 
@@ -15,6 +15,10 @@ pub fn standard_env() -> HashMap<String, Expr> {
     env.insert(
         "*".to_string(),
         Expr::Func(mul),
+    );
+    env.insert(
+        "-".to_string(),
+        Expr::Func(sub),
     );
     return env;
 }
