@@ -3,93 +3,49 @@ use crate::{
     env::EnvType,
 };
 
-pub fn add(args: Vec<Expr>, env: &mut EnvType) -> Result<Expr, RuntimeError> {
-    let res = args.into_iter().try_fold(Number::Int(0), |x, y| match y {
-        Expr::Atom(Atom::Number(num)) => Ok(x + num),
-        Expr::List(mut exprs) => match execute(&mut exprs, env) {
-            Ok(res) => match add(vec![Expr::Atom(Atom::Number(x)), res], env) {
-                Ok(Expr::Atom(Atom::Number(num))) => Ok(num),
-                _ => Err(RuntimeError {
-                    err: "brrrrrrrr this should not happen".to_string(),
-                }),
-            },
-            Err(e) => Err(e),
-        },
-        _ => Err(RuntimeError {
-            err: "TF you adding you retard".to_string(),
-        }),
+fn number_op(
+    args: Vec<Expr>,
+    env: &mut EnvType,
+    init: Number,
+    op: fn(Number, Number) -> Number,
+) -> Result<Expr, RuntimeError> {
+    let res = args.into_iter().try_fold(init, |x, y| {
+        let num = extract_num(y, env)?;
+        Ok(op(x, num))
     });
-    match res {
-        Ok(result) => Ok(Expr::Atom(Atom::Number(result))),
-        Err(err) => Err(err),
+    Ok(Expr::Atom(Atom::Number(res?)))
+}
+
+fn extract_num(expr: Expr, env: &mut EnvType) -> Result<Number, RuntimeError> {
+    match expr {
+        Expr::Atom(Atom::Number(number)) => Ok(number),
+        Expr::List(mut exprs) => {
+            let res = execute(&mut exprs, env)?;
+            match res {
+                Expr::Atom(Atom::Number(num)) => Ok(num),
+                _ => Err(RuntimeError {
+                    err: format!("trying to perform arithmetic on non-number: {}", res).to_string(),
+                }),
+            }
+        }
+        _ => Err(RuntimeError {
+            err: format!("trying to perform arithmetic on non-number: {}", expr).to_string(),
+        }),
     }
 }
 
+pub fn add(args: Vec<Expr>, env: &mut EnvType) -> Result<Expr, RuntimeError> {
+    number_op(args, env, Number::Int(0), |x, y| x + y)
+}
+
 pub fn mul(args: Vec<Expr>, env: &mut EnvType) -> Result<Expr, RuntimeError> {
-    let res = args.into_iter().try_fold(Number::Int(1), |x, y| match y {
-        Expr::Atom(Atom::Number(num)) => Ok(x * num),
-        Expr::List(mut exprs) => match execute(&mut exprs, env) {
-            Ok(res) => match add(vec![Expr::Atom(Atom::Number(x)), res], env) {
-                Ok(Expr::Atom(Atom::Number(num))) => Ok(num),
-                _ => Err(RuntimeError {
-                    err: "brrrrrrrr this should not happen".to_string(),
-                }),
-            },
-            Err(e) => Err(e),
-        },
-        _ => Err(RuntimeError {
-            err: "TF you adding you retard".to_string(),
-        }),
-    });
-    match res {
-        Ok(result) => Ok(Expr::Atom(Atom::Number(result))),
-        Err(err) => Err(err),
-    }
+    number_op(args, env, Number::Int(1), |x, y| x * y)
 }
 
 pub fn sub(args: Vec<Expr>, env: &mut EnvType) -> Result<Expr, RuntimeError> {
     let mut args = args.clone();
-    let first = args.remove(0);
-    let result = match first {
-        Expr::Atom(Atom::Number(number)) => Ok(number),
-        Expr::List(mut exprs) => match execute(&mut exprs, env) {
-            Ok(res) => match res {
-                Expr::Atom(Atom::Number(num)) => Ok(num),
-                _ => Err(RuntimeError {
-                    err: "trying to perform arithmetic on non-number".to_string(),
-                }),
-            },
-            _ => Err(RuntimeError {
-                err: "trying to perform arithmetic on non-number".to_string(),
-            }),
-        },
-        _ => Err(RuntimeError {
-            err: "trying to perform arithmetic operation on non-number".to_string(),
-        }),
-    };
-    let start = match result {
-        Ok(res) => res,
-        Err(err) => return Err(err),
-    };
-    let res = args.into_iter().try_fold(start, |x, y| match y {
-        Expr::Atom(Atom::Number(num)) => Ok(x - num),
-        Expr::List(mut exprs) => match execute(&mut exprs, env) {
-            Ok(res) => match add(vec![Expr::Atom(Atom::Number(x)), res], env) {
-                Ok(Expr::Atom(Atom::Number(num))) => Ok(num),
-                _ => Err(RuntimeError {
-                    err: "brrrrrrrr this should not happen".to_string(),
-                }),
-            },
-            Err(e) => Err(e),
-        },
-        _ => Err(RuntimeError {
-            err: "TF you adding you retard".to_string(),
-        }),
-    });
-    match res {
-        Ok(result) => Ok(Expr::Atom(Atom::Number(result))),
-        Err(err) => Err(err),
-    }
+    let start = extract_num(args.remove(0), env)?;
+    number_op(args, env, start, |x, y| x - y)
 }
 
 pub fn execute(expr: &mut Vec<Expr>, env: &mut EnvType) -> Result<Expr, RuntimeError> {

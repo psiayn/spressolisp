@@ -2,11 +2,13 @@ use std::fmt;
 
 use crate::env::EnvType;
 
+pub type FuncType = fn(Vec<Expr>, &mut EnvType) -> Result<Expr, RuntimeError>;
+
 #[derive(Clone)]
 pub enum Expr {
     Atom(Atom),
     List(Vec<Expr>),
-    Func(fn(Vec<Expr>, &mut EnvType) -> Result<Expr, RuntimeError>),
+    Func(FuncType),
 }
 
 impl fmt::Display for Expr {
@@ -105,7 +107,6 @@ impl fmt::Display for RuntimeError {
 }
 
 fn pretty_ast(ast: &Expr, level: usize, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    // do stuff
     fn type_name_of<T>(_: T) -> &'static str {
         std::any::type_name::<T>()
     }
