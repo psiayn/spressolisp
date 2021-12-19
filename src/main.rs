@@ -4,8 +4,11 @@ mod eval;
 
 use std::io::{self, Write};
 
-use crate::{ast::{Expr, Atom, Number, RuntimeError}, env::standard_env};
 use crate::eval::execute;
+use crate::{
+    ast::{Atom, Expr, Number, RuntimeError},
+    env::standard_env,
+};
 
 fn main() {
     loop {
@@ -27,9 +30,15 @@ fn main() {
                         Ok(e) => println!("{}", e),
                         Err(e) => println!("{}", e),
                     },
-                    _ => println!("{}", RuntimeError{err: "Hmm I can't execute something that is not a list".to_string()}),
+                    _ => println!(
+                        "{}",
+                        RuntimeError::from(format!(
+                            "Hmm I can't execute something that is not a list: {}",
+                            ast
+                        ))
+                    ),
                 }
-            },
+            }
             Err(e) => println!("{}", e),
         };
     }
@@ -47,29 +56,31 @@ fn tokenize(input: String) -> Vec<String> {
 
 fn read_from_tokens(tokens: &mut Vec<String>) -> Result<Expr, RuntimeError> {
     if tokens.len() == 0 {
-        return Err(RuntimeError { err: "Unexpected EOF".to_string() });
+        return Err(RuntimeError::from("Unexpected EOF".to_string()));
     }
     let token = tokens.remove(0);
     match token.as_str() {
         "(" => {
-           if tokens.len() == 0 {
-               return Err(RuntimeError { err: "'(' not closed".to_string() });
-           }
-           let mut ast: Vec<Expr> = Vec::new();
-           while tokens[0] != ")" {
-               let inner_ast = match read_from_tokens(tokens) {
-                   Ok(res) => res,
-                   Err(e) => return Err(e),
-               };
-               ast.push(inner_ast);
-               if tokens.len() == 0 {
-                   return Err(RuntimeError { err: "'(' not closed".to_string() });
-               }
-           }
-           tokens.remove(0);
-           return Ok(Expr::List(ast));
-        },
-        ")" => return Err(RuntimeError { err: "Unexpected ')'".to_string() }),
+            if tokens.len() == 0 {
+                return Err(RuntimeError::from("'(' not closed"));
+            }
+            let mut ast: Vec<Expr> = Vec::new();
+            while tokens[0] != ")" {
+                let inner_ast = match read_from_tokens(tokens) {
+                    Ok(res) => res,
+                    Err(e) => return Err(e),
+                };
+                ast.push(inner_ast);
+                if tokens.len() == 0 {
+                    return Err(RuntimeError::from("'(' not closed"));
+                }
+            }
+            tokens.remove(0);
+            return Ok(Expr::List(ast));
+        }
+        ")" => {
+            return Err(RuntimeError::from("Unexpected ')'"))
+        }
         _ => Ok(Expr::Atom(atom(token))),
     }
 }

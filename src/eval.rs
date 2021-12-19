@@ -9,11 +9,13 @@ fn number_op(
     init: Number,
     op: fn(Number, Number) -> Number,
 ) -> Result<Expr, RuntimeError> {
-    let res = args.into_iter().try_fold(init, |x, y| {
-        let num = extract_num(y, env)?;
-        Ok(op(x, num))
-    });
-    Ok(Expr::Atom(Atom::Number(res?)))
+    Ok(Expr::Atom(Atom::Number(
+        args.into_iter()
+            .try_fold::<_, _, Result<Number, RuntimeError>>(init, |x, y| {
+                let num = extract_num(y, env)?;
+                Ok(op(x, num))
+            })?,
+    )))
 }
 
 fn extract_num(expr: Expr, env: &mut EnvType) -> Result<Number, RuntimeError> {
@@ -23,14 +25,16 @@ fn extract_num(expr: Expr, env: &mut EnvType) -> Result<Number, RuntimeError> {
             let res = execute(&mut exprs, env)?;
             match res {
                 Expr::Atom(Atom::Number(num)) => Ok(num),
-                _ => Err(RuntimeError {
-                    err: format!("trying to perform arithmetic on non-number: {}", res).to_string(),
-                }),
+                _ => Err(RuntimeError::from(format!(
+                    "trying to perform arithmetic on non-number: {}",
+                    res
+                ))),
             }
         }
-        _ => Err(RuntimeError {
-            err: format!("trying to perform arithmetic on non-number: {}", expr).to_string(),
-        }),
+        _ => Err(RuntimeError::from(format!(
+            "trying to perform arithmetic on non-number: {}",
+            expr
+        ))),
     }
 }
 
@@ -58,14 +62,13 @@ pub fn execute(expr: &mut Vec<Expr>, env: &mut EnvType) -> Result<Expr, RuntimeE
                 expr.insert(0, func.clone());
                 execute(expr, env)
             } else {
-                Err(RuntimeError {
-                    err: "Symbol not found".to_string(),
-                })
+                Err(RuntimeError::from(format!("Symbol not found: {}", symbol)))
             }
         }
         Expr::List(mut exprs) => execute(&mut exprs, env),
-        _ => Err(RuntimeError {
-            err: "Why you calling something else, when it's not function".to_string(),
-        }),
+        _ => Err(RuntimeError::from(format!(
+            "Why you calling something else, when it's not function: {}",
+            first_arg
+        ))),
     }
 }
