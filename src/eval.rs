@@ -1,11 +1,11 @@
 use crate::{
     ast::{Atom, Expr, Number, RuntimeError},
-    env::EnvType,
+    env::Env,
 };
 
 fn number_op(
     args: Vec<Expr>,
-    env: &mut EnvType,
+    env: &mut Env,
     init: Number,
     op: fn(Number, Number) -> Number,
 ) -> Result<Expr, RuntimeError> {
@@ -18,7 +18,7 @@ fn number_op(
     )))
 }
 
-fn extract_num(expr: Expr, env: &mut EnvType) -> Result<Number, RuntimeError> {
+pub fn extract_num(expr: Expr, env: &mut Env) -> Result<Number, RuntimeError> {
     match expr {
         Expr::Atom(Atom::Number(number)) => Ok(number),
         Expr::List(mut exprs) => {
@@ -38,21 +38,21 @@ fn extract_num(expr: Expr, env: &mut EnvType) -> Result<Number, RuntimeError> {
     }
 }
 
-pub fn add(args: Vec<Expr>, env: &mut EnvType) -> Result<Expr, RuntimeError> {
+pub fn add(args: Vec<Expr>, env: &mut Env) -> Result<Expr, RuntimeError> {
     number_op(args, env, Number::Int(0), |x, y| x + y)
 }
 
-pub fn mul(args: Vec<Expr>, env: &mut EnvType) -> Result<Expr, RuntimeError> {
+pub fn mul(args: Vec<Expr>, env: &mut Env) -> Result<Expr, RuntimeError> {
     number_op(args, env, Number::Int(1), |x, y| x * y)
 }
 
-pub fn sub(args: Vec<Expr>, env: &mut EnvType) -> Result<Expr, RuntimeError> {
+pub fn sub(args: Vec<Expr>, env: &mut Env) -> Result<Expr, RuntimeError> {
     let mut args = args.clone();
     let start = extract_num(args.remove(0), env)?;
     number_op(args, env, start, |x, y| x - y)
 }
 
-pub fn execute(expr: &mut Vec<Expr>, env: &mut EnvType) -> Result<Expr, RuntimeError> {
+pub fn execute(expr: &mut Vec<Expr>, env: &mut Env) -> Result<Expr, RuntimeError> {
     let first_arg = expr.remove(0);
     match first_arg {
         Expr::Func(func) => func(expr.to_vec(), env),

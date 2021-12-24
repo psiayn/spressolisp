@@ -1,8 +1,9 @@
 use std::io::{self, Write};
 
-use spressolisp::funcs::evaluate_expression;
+use spressolisp::{evaluate_expression, env::Env};
 
 fn main() {
+    let mut env = Env::new();
     loop {
         let mut inp = String::new();
         print!("spresso> ");
@@ -12,7 +13,7 @@ fn main() {
         if input == ".quit" {
             break;
         }
-        match evaluate_expression(input) {
+        match evaluate_expression(input, &mut env) {
             Ok(res) => println!("{}", res),
             Err(err) => println!("{}", err),
         }
