@@ -1,9 +1,9 @@
 use std::fmt;
 
 use crate::env::Env;
-use crate::errors::RuntimeError;
+use crate::errors::SpressoError;
 
-pub type FuncType = fn(Vec<Expr>, &mut Env) -> Result<Expr, RuntimeError>;
+pub type FuncType = fn(Vec<Expr>, &mut Env) -> Result<Expr, SpressoError>;
 
 #[derive(Clone)]
 pub enum Expr {

@@ -1,5 +1,9 @@
 use spressolisp::{
-    ast::Number, env::Env, errors::RuntimeError, eval::extract_num, evaluate_expression,
+    ast::Number,
+    env::Env,
+    errors::SyntaxError,
+    eval::extract_num,
+    evaluate_expression,
 };
 
 #[test]
@@ -22,7 +26,7 @@ fn test_wrong_syntax() {
     let inp = evaluate_expression("(+ 12 32".to_string(), &mut env);
 
     if let Err(err) = inp {
-        let expected = RuntimeError {
+        let expected = SyntaxError {
             err: "'(' not closed".to_string(),
         };
         assert_eq!(err.to_string(), expected.to_string());

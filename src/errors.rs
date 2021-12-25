@@ -10,9 +10,9 @@ pub enum SpressoError {
 impl fmt::Display for SpressoError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            SpressoError::Runtime(err) => write!(f, "{:?}", err),
-            SpressoError::Syntax(err) => write!(f, "{:?}", err),
-            SpressoError::Numeric(err) => write!(f, "{:?}", err),
+            SpressoError::Runtime(err) => write!(f, "{}", err),
+            SpressoError::Syntax(err) => write!(f, "{}", err),
+            SpressoError::Numeric(err) => write!(f, "{}", err),
         }
     }
 }
@@ -26,6 +26,12 @@ impl From<RuntimeError> for SpressoError {
 impl From<SyntaxError> for SpressoError {
     fn from(err: SyntaxError) -> Self {
         SpressoError::Syntax(err)
+    }
+}
+
+impl From<NumericError> for SpressoError {
+    fn from(err: NumericError) -> Self {
+        SpressoError::Numeric(err)
     }
 }
 

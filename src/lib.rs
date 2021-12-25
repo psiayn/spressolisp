@@ -5,23 +5,18 @@ pub mod eval;
 
 use crate::ast::{Atom, Expr, Number};
 use crate::env::Env;
-use crate::errors::RuntimeError;
+use crate::errors::{RuntimeError, SpressoError, SyntaxError};
 use crate::eval::execute;
 
-pub fn evaluate_expression(input: String, env: &mut Env) -> Result<Expr, RuntimeError> {
+pub fn evaluate_expression(input: String, env: &mut Env) -> Result<Expr, SpressoError> {
     let mut tokenized_input: Vec<String> = tokenize(input);
-    match parse(&mut tokenized_input) {
-        Ok(ast) => {
-            // println!("{}", ast);
-            match ast {
-                Expr::List(mut exprs) => execute(&mut exprs, env),
-                _ => Err(RuntimeError::from(format!(
-                    "Hmm I can't execute something that is not a list: {}",
-                    ast
-                ))),
-            }
-        }
-        Err(e) => Err(e),
+    let ast = parse(&mut tokenized_input)?;
+    match ast {
+        Expr::List(mut exprs) => execute(&mut exprs, env),
+        _ => Err(SpressoError::Runtime(RuntimeError::from(format!(
+            "Hmm I can't execute something that is not a list: {}",
+            ast
+        )))),
     }
 }
 
@@ -34,15 +29,15 @@ fn tokenize(input: String) -> Vec<String> {
     return res;
 }
 
-fn parse(tokens: &mut Vec<String>) -> Result<Expr, RuntimeError> {
+fn parse(tokens: &mut Vec<String>) -> Result<Expr, SyntaxError> {
     if tokens.len() == 0 {
-        return Err(RuntimeError::from("Unexpected EOF".to_string()));
+        return Err(SyntaxError::from("Unexpected EOF".to_string()));
     }
     let token = tokens.remove(0);
     match token.as_str() {
         "(" => {
             if tokens.len() == 0 {
-                return Err(RuntimeError::from("'(' not closed"));
+                return Err(SyntaxError::from("'(' not closed"));
             }
             let mut ast: Vec<Expr> = Vec::new();
             while tokens[0] != ")" {
@@ -52,13 +47,13 @@ fn parse(tokens: &mut Vec<String>) -> Result<Expr, RuntimeError> {
                 };
                 ast.push(inner_ast);
                 if tokens.len() == 0 {
-                    return Err(RuntimeError::from("'(' not closed"));
+                    return Err(SyntaxError::from("'(' not closed"));
                 }
             }
             tokens.remove(0);
             return Ok(Expr::List(ast));
         }
-        ")" => return Err(RuntimeError::from("Unexpected ')'")),
+        ")" => return Err(SyntaxError::from("Unexpected ')'")),
         _ => Ok(Expr::Atom(parse_int(token))),
     }
 }
