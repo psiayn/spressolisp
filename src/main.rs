@@ -1,6 +1,6 @@
 use std::io::{self, Write};
 
-use spressolisp::{evaluate_expression, env::Env};
+use spressolisp::{env::Env, evaluate_expression};
 
 fn main() {
     let mut env = Env::new();

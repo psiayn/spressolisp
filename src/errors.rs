@@ -12,7 +12,7 @@ impl fmt::Display for SpressoError {
         match self {
             SpressoError::Runtime(err) => write!(f, "{:?}", err),
             SpressoError::Syntax(err) => write!(f, "{:?}", err),
-            SpressoError::Numeric(err) => write!(f, "{:?}", err),            
+            SpressoError::Numeric(err) => write!(f, "{:?}", err),
         }
     }
 }
@@ -36,7 +36,9 @@ pub struct RuntimeError {
 
 impl From<&str> for RuntimeError {
     fn from(message: &str) -> Self {
-        RuntimeError { err: message.to_string() }
+        RuntimeError {
+            err: message.to_string(),
+        }
     }
 }
 
@@ -59,7 +61,9 @@ pub struct SyntaxError {
 
 impl From<&str> for SyntaxError {
     fn from(message: &str) -> Self {
-        SyntaxError { err: message.to_string() }
+        SyntaxError {
+            err: message.to_string(),
+        }
     }
 }
 
@@ -82,7 +86,9 @@ pub struct NumericError {
 
 impl From<&str> for NumericError {
     fn from(message: &str) -> Self {
-        NumericError { err: message.to_string() }
+        NumericError {
+            err: message.to_string(),
+        }
     }
 }
 

@@ -1,7 +1,7 @@
 use crate::{
     ast::{Atom, Expr, Number},
-    errors::RuntimeError,
     env::Env,
+    errors::RuntimeError,
 };
 
 fn number_op(

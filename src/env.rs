@@ -11,7 +11,6 @@ pub struct Env {
     map: EnvMapType,
 }
 
-
 impl Env {
     pub fn new() -> Self {
         let mut env = EnvMapType::new();

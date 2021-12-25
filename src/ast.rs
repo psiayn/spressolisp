@@ -104,8 +104,10 @@ fn pretty_ast(ast: &Expr, level: usize, f: &mut fmt::Formatter<'_>) -> fmt::Resu
     match ast {
         Expr::List(list) => {
             write!(f, "{}List\n", "\t".repeat(level)).unwrap();
-            list.into_iter().map(|token| pretty_ast(token, level + 1, f)).collect()
-        },
+            list.into_iter()
+                .map(|token| pretty_ast(token, level + 1, f))
+                .collect()
+        }
         Expr::Atom(token) => write!(f, "{}{}\n", "\t".repeat(level), token),
         Expr::Func(func) => write!(f, "{}{}\n", "\t".repeat(level), type_name_of(func)),
     }

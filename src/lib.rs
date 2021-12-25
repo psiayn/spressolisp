@@ -1,7 +1,7 @@
 pub mod ast;
 pub mod env;
-pub mod eval;
 pub mod errors;
+pub mod eval;
 
 use crate::ast::{Atom, Expr, Number};
 use crate::env::Env;
