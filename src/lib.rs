@@ -1,9 +1,11 @@
 pub mod ast;
 pub mod env;
 pub mod eval;
+pub mod errors;
 
-use crate::ast::{Atom, Expr, Number, RuntimeError};
+use crate::ast::{Atom, Expr, Number};
 use crate::env::Env;
+use crate::errors::RuntimeError;
 use crate::eval::execute;
 
 pub fn evaluate_expression(input: String, env: &mut Env) -> Result<Expr, RuntimeError> {

@@ -1,6 +1,7 @@
 use std::fmt;
 
 use crate::env::Env;
+use crate::errors::RuntimeError;
 
 pub type FuncType = fn(Vec<Expr>, &mut Env) -> Result<Expr, RuntimeError>;
 
@@ -92,28 +93,6 @@ impl std::ops::Sub<Number> for Number {
                 Number::Int(lhs) => Number::Int(lhs - num),
             },
         }
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct RuntimeError {
-    pub err: String,
-}
-
-impl From<&str> for RuntimeError {
-    fn from(message: &str) -> Self {
-        RuntimeError { err: message.to_string() }
-    }
-}
-impl From<String> for RuntimeError {
-    fn from(message: String) -> Self {
-        RuntimeError { err: message }
-    }
-}
-
-impl fmt::Display for RuntimeError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "Runtime Error: {}", self.err)
     }
 }
 

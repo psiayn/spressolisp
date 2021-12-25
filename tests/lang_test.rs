@@ -1,5 +1,6 @@
 use spressolisp::{
-    ast::{Number, RuntimeError},
+    ast::Number,
+    errors::RuntimeError,
     eval::extract_num,
     env::Env,
     evaluate_expression,

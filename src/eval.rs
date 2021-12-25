@@ -1,5 +1,6 @@
 use crate::{
-    ast::{Atom, Expr, Number, RuntimeError},
+    ast::{Atom, Expr, Number},
+    errors::RuntimeError,
     env::Env,
 };
 
