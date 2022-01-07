@@ -1,7 +1,7 @@
 use std::fmt;
 
 use crate::env::Env;
-use crate::errors::SpressoError;
+use crate::errors::{SpressoError, NumericError};
 
 pub type FuncType = fn(Vec<Expr>, &mut Env) -> Result<Expr, SpressoError>;
 
@@ -49,54 +49,81 @@ impl fmt::Display for Number {
 }
 
 impl std::ops::Add<Number> for Number {
-    type Output = Number;
+    type Output = Result<Number, SpressoError>;
     fn add(self, rhs: Number) -> Self::Output {
         match rhs {
             Number::Float(num) => match self {
-                Number::Float(lhs) => Number::Float(lhs + num),
-                Number::Int(lhs) => Number::Float(lhs as f64 + num),
+                Number::Float(lhs) => Ok(Number::Float(lhs + num)),
+                Number::Int(lhs) => Ok(Number::Float(lhs as f64 + num)),
             },
             Number::Int(num) => match self {
-                Number::Float(lhs) => Number::Float(lhs + num as f64),
-                Number::Int(lhs) => Number::Int(lhs + num),
+                Number::Float(lhs) => Ok(Number::Float(lhs + num as f64)),
+                Number::Int(lhs) => Ok(Number::Int(lhs + num)),
             },
         }
     }
 }
 
 impl std::ops::Mul<Number> for Number {
-    type Output = Number;
+    type Output = Result<Number, SpressoError>;
     fn mul(self, rhs: Number) -> Self::Output {
         match rhs {
             Number::Float(num) => match self {
-                Number::Float(lhs) => Number::Float(lhs * num),
-                Number::Int(lhs) => Number::Float(lhs as f64 * num),
+                Number::Float(lhs) => Ok(Number::Float(lhs * num)),
+                Number::Int(lhs) => Ok(Number::Float(lhs as f64 * num)),
             },
             Number::Int(num) => match self {
-                Number::Float(lhs) => Number::Float(lhs * num as f64),
-                Number::Int(lhs) => Number::Int(lhs * num),
+                Number::Float(lhs) => Ok(Number::Float(lhs * num as f64)),
+                Number::Int(lhs) => Ok(Number::Int(lhs * num)),
             },
         }
     }
 }
 
 impl std::ops::Sub<Number> for Number {
-    type Output = Number;
+    type Output = Result<Number, SpressoError>;
     fn sub(self, rhs: Number) -> Self::Output {
         match rhs {
             Number::Float(num) => match self {
-                Number::Float(lhs) => Number::Float(lhs - num),
-                Number::Int(lhs) => Number::Float(lhs as f64 - num),
+                Number::Float(lhs) => Ok(Number::Float(lhs - num)),
+                Number::Int(lhs) => Ok(Number::Float(lhs as f64 - num)),
             },
             Number::Int(num) => match self {
-                Number::Float(lhs) => Number::Float(lhs - num as f64),
-                Number::Int(lhs) => Number::Int(lhs - num),
+                Number::Float(lhs) => Ok(Number::Float(lhs - num as f64)),
+                Number::Int(lhs) => Ok(Number::Int(lhs - num)),
             },
         }
     }
 }
 
-fn pretty_ast(ast: &Expr, level: usize, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+impl std::ops::Div<Number> for Number {
+    type Output = Result<Number, SpressoError>;
+    fn div(self, rhs: Number) -> Self::Output {
+        match rhs {
+            Number::Float(num) => {
+                if num == 0.0 || num == -0.0 {
+                    return Err(SpressoError::Numeric(NumericError {err : "Division By Zero".to_string()} ));
+                }
+                match self {
+                    Number::Float(lhs) => Ok(Number::Float(lhs / num)),
+                    Number::Int(lhs) => Ok(Number::Float(lhs as f64 / num)),
+                }
+            },
+            Number::Int(num) => {
+                if num == 0 || num == -0 {
+                    return Err(SpressoError::Numeric(NumericError {err : "Division By Zero".to_string()} ));
+                }
+                match self {
+                    Number::Float(lhs) => Ok(Number::Float(lhs / num as f64)),
+                    Number::Int(lhs) => Ok(Number::Int(lhs / num)),
+                }
+            },
+        }
+    }
+}
+
+fn pretty_ast(ast: &Expr, level: usize, f: &mut fmt::Formatter<'_>) 
+-> fmt::Result {
     fn type_name_of<T>(_: T) -> &'static str {
         std::any::type_name::<T>()
     }
