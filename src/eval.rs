@@ -60,7 +60,12 @@ pub fn div(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
 }
 
 pub fn execute(expr: &mut Vec<Expr>, env: &mut Env) 
-    -> Result<Expr, SpressoError> {
+	       -> Result<Expr, SpressoError> {
+    if expr.len() == 1 {
+	if let Expr::Atom(_) = expr[0] {
+	    return Ok(expr[0].clone());
+	}
+    }
     let first_arg = expr.remove(0);
     match first_arg {
         Expr::Func(func) => func(expr.to_vec(), env),
@@ -82,4 +87,13 @@ pub fn execute(expr: &mut Vec<Expr>, env: &mut Env)
             first_arg
         )))),
     }
+}
+
+pub fn define(args: Vec<Expr>, env: &mut Env)
+	      -> Result<Expr, SpressoError>{
+    let mut args = args.clone();
+    let variable_name = args.remove(0);
+    let result = execute(&mut args, env)?;
+    env.insert(&variable_name.to_string(), result);
+    Ok(Expr::Atom(Atom::Number(Number::Int(0))))
 }
