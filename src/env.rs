@@ -29,6 +29,12 @@ impl Env {
     pub fn contains_key(&self, key: &str) -> bool {
         self.map.contains_key(key)
     }
+
+    pub fn display(&self) {
+	for (key, value) in &self.map {
+	    println!("{}: {}", key, value);
+	}
+    }
 }
 
 impl Index<&str> for Env {

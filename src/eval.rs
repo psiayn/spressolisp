@@ -22,6 +22,22 @@ fn number_op(
 pub fn extract_num(expr: Expr, env: &mut Env) -> Result<Number, SpressoError> {
     match expr {
         Expr::Atom(Atom::Number(number)) => Ok(number),
+        Expr::Atom(Atom::Symbol(symbol)) => {
+            if env.contains_key(symbol.as_str()) {
+                let sym = env[&symbol.as_str()].clone();
+                match sym {
+                    Expr::Atom(Atom::Number(num)) => Ok(num),
+                    _ => Err(SpressoError::from(NumericError {
+                        err: "Tried to extract num from variable but failed".to_string(),
+                    })),
+                }
+            } else {
+                return Err(SpressoError::from(RuntimeError::from(format!(
+                    "Symbol not found: {}",
+                    symbol
+                ))));
+            }
+        }
         Expr::List(mut exprs) => {
             let res = execute(&mut exprs, env)?;
             match res {
@@ -59,12 +75,11 @@ pub fn div(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
     number_op(args, env, start, |x, y| x / y)
 }
 
-pub fn execute(expr: &mut Vec<Expr>, env: &mut Env) 
-	       -> Result<Expr, SpressoError> {
+pub fn execute(expr: &mut Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
     if expr.len() == 1 {
-	if let Expr::Atom(_) = expr[0] {
-	    return Ok(expr[0].clone());
-	}
+        if let Expr::Atom(_) = expr[0] {
+            return Ok(expr[0].clone());
+        }
     }
     let first_arg = expr.remove(0);
     match first_arg {
@@ -89,11 +104,10 @@ pub fn execute(expr: &mut Vec<Expr>, env: &mut Env)
     }
 }
 
-pub fn define(args: Vec<Expr>, env: &mut Env)
-	      -> Result<Expr, SpressoError>{
+pub fn define(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
     let mut args = args.clone();
     let variable_name = args.remove(0);
     let result = execute(&mut args, env)?;
-    env.insert(&variable_name.to_string(), result);
-    Ok(Expr::Atom(Atom::Number(Number::Int(0))))
+    env.insert(&variable_name.to_string().trim(), result.clone());
+    Ok(result)
 }
