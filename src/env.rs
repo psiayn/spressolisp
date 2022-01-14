@@ -3,7 +3,7 @@ use std::ops::Index;
 
 use crate::ast::Expr;
 
-use crate::eval::{add, mul, sub, div, define};
+use crate::eval::{add, mul, sub, div, define, print};
 
 pub type EnvMapType = HashMap<String, Expr>;
 
@@ -19,6 +19,7 @@ impl Env {
         env.insert("-".to_string(), Expr::Func(sub));
         env.insert("/".to_string(), Expr::Func(div));
 	env.insert("define".to_string(), Expr::Func(define));
+	env.insert("print".to_string(), Expr::Func(print));
         return Env { map: env };
     }
 

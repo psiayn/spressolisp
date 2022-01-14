@@ -77,8 +77,22 @@ pub fn div(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
 
 pub fn execute(expr: &mut Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
     if expr.len() == 1 {
-        if let Expr::Atom(_) = expr[0] {
-            return Ok(expr[0].clone());
+        if let Expr::Atom(atom) = expr[0].clone() {
+            // return Ok(expr[0].clone());
+            // extract symbol and return value if any
+            match atom {
+                Atom::Symbol(symbol) => {
+                    if env.contains_key(&symbol.as_str()) {
+                        return Ok(env[&symbol.as_str()].clone());
+                    } else {
+                        return Err(SpressoError::from(RuntimeError::from(format!(
+                            "Symbol not found: {}",
+                            symbol
+                        ))));
+                    }
+                }
+                _ => return Ok(Expr::Atom(atom)),
+            }
         }
     }
     let first_arg = expr.remove(0);
@@ -109,5 +123,11 @@ pub fn define(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
     let variable_name = args.remove(0);
     let result = execute(&mut args, env)?;
     env.insert(&variable_name.to_string().trim(), result.clone());
+    Ok(result)
+}
+
+pub fn print(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
+    let mut args = args.clone();
+    let result = execute(&mut args, env)?;
     Ok(result)
 }
