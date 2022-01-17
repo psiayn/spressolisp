@@ -9,7 +9,6 @@ use crate::errors::{RuntimeError, SpressoError, SyntaxError};
 use crate::eval::execute;
 
 pub fn evaluate_expression(input: String, env: &mut Env) -> Result<Expr, SpressoError> {
-    
     let mut tokenized_input: Vec<String> = tokenize(input);
     let ast = parse(&mut tokenized_input)?;
     match ast {

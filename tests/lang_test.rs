@@ -1,9 +1,5 @@
 use spressolisp::{
-    ast::Number,
-    env::Env,
-    errors::SyntaxError,
-    eval::extract_num,
-    evaluate_expression,
+    ast::Number, env::Env, errors::SyntaxError, eval::extract_num, evaluate_expression,
 };
 
 #[test]

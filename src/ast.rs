@@ -1,7 +1,7 @@
 use std::fmt;
 
 use crate::env::Env;
-use crate::errors::{SpressoError, NumericError};
+use crate::errors::{NumericError, SpressoError};
 
 pub type FuncType = fn(Vec<Expr>, &mut Env) -> Result<Expr, SpressoError>;
 
@@ -102,28 +102,31 @@ impl std::ops::Div<Number> for Number {
         match rhs {
             Number::Float(num) => {
                 if num == 0.0 || num == -0.0 {
-                    return Err(SpressoError::Numeric(NumericError {err : "Division By Zero".to_string()} ));
+                    return Err(SpressoError::Numeric(NumericError {
+                        err: "Division By Zero".to_string(),
+                    }));
                 }
                 match self {
                     Number::Float(lhs) => Ok(Number::Float(lhs / num)),
                     Number::Int(lhs) => Ok(Number::Float(lhs as f64 / num)),
                 }
-            },
+            }
             Number::Int(num) => {
                 if num == 0 || num == -0 {
-                    return Err(SpressoError::Numeric(NumericError {err : "Division By Zero".to_string()} ));
+                    return Err(SpressoError::Numeric(NumericError {
+                        err: "Division By Zero".to_string(),
+                    }));
                 }
                 match self {
                     Number::Float(lhs) => Ok(Number::Float(lhs / num as f64)),
                     Number::Int(lhs) => Ok(Number::Int(lhs / num)),
                 }
-            },
+            }
         }
     }
 }
 
-fn pretty_ast(ast: &Expr, level: usize, f: &mut fmt::Formatter<'_>) 
--> fmt::Result {
+fn pretty_ast(ast: &Expr, level: usize, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     fn type_name_of<T>(_: T) -> &'static str {
         std::any::type_name::<T>()
     }
