@@ -1,5 +1,5 @@
 use crate::{
-    ast::{Atom, Expr, Number},
+    ast::{Atom, Expr, Lambda, Number},
     env::Env,
     errors::{NumericError, RuntimeError, SpressoError},
 };
@@ -130,4 +130,29 @@ pub fn print(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
     let mut args = args.clone();
     let result = execute(&mut args, env)?;
     Ok(result)
+}
+
+pub fn lambda(args: Vec<Expr>, _env: &mut Env) -> Result<Expr, SpressoError> {
+    if args.len() != 2 {
+        return Err(SpressoError::from(RuntimeError::from(
+            "A lambda definition must have a param list and a body",
+        )));
+    }
+
+    let fn_params = args[0].clone();
+    let body = args[1].clone();
+
+    // TODO: support multiple parameters (tuple of args)
+    // for now only single parameters
+
+    if let Expr::Atom(Atom::Symbol(fn_param)) = fn_params {
+        Ok(Expr::Lambda(Lambda {
+            params: vec![fn_param],
+            body: Box::new(body),
+        }))
+    } else {
+        Err(SpressoError::from(RuntimeError::from(
+            "lambda parameters must be a symbol",
+        )))
+    }
 }
