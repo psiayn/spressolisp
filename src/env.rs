@@ -1,9 +1,9 @@
 use std::collections::HashMap;
 use std::ops::Index;
 
-use crate::ast::Expr;
+use crate::ast::{Atom, Expr};
 
-use crate::eval::{add, define, div, mul, print, sub};
+use crate::eval::{add, define, div, if_cond, mul, print, sub};
 
 pub type EnvMapType = HashMap<String, Expr>;
 
@@ -20,6 +20,9 @@ impl Env {
         env.insert("/".to_string(), Expr::Func(div));
         env.insert("define".to_string(), Expr::Func(define));
         env.insert("print".to_string(), Expr::Func(print));
+        env.insert("true".to_string(), Expr::Atom(Atom::Bool(true)));
+        env.insert("false".to_string(), Expr::Atom(Atom::Bool(false)));
+        env.insert("if".to_string(), Expr::Func(if_cond));
         return Env { map: env };
     }
 

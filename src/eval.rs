@@ -1,8 +1,4 @@
-use crate::{
-    ast::{Atom, Expr, Number},
-    env::Env,
-    errors::{NumericError, RuntimeError, SpressoError},
-};
+use crate::{ast::{Atom, Expr, Number}, env::Env, errors::{NumericError, RuntimeError, SpressoError, SyntaxError}};
 
 fn number_op(
     args: Vec<Expr>,
@@ -130,4 +126,37 @@ pub fn print(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
     let mut args = args.clone();
     let result = execute(&mut args, env)?;
     Ok(result)
+}
+
+pub fn if_cond(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
+    let mut args = args.clone();
+    for expr in &args {
+	println!("{}", expr);
+    }
+    let cond = args.remove(0);
+    match execute(&mut vec!(cond), env) {
+	Ok(res) => {
+	    println!("YEET");
+	    match res {
+		Expr::Atom(Atom::Bool(boolean)) => {
+		    if boolean {
+			// execute true
+			println!("TRUE");
+		    } else {
+			// execute false
+			println!("FALSE");
+		    }
+		    println!("GG");
+		},
+		x => {
+		    println!("{}", x);
+		    return Err(SpressoError::from(SyntaxError {
+		    err: "Trying to use a non bool for condition".to_string(),
+		    }))
+		},
+	    }
+	},
+	Err(err) => return Err(err),
+    };
+    Ok(execute(&mut args, env)?)
 }
