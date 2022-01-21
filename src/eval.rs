@@ -75,9 +75,11 @@ pub fn div(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
     number_op(args, env, start, |x, y| x / y)
 }
 
-pub fn execute(expr: &mut Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
-    if expr.len() == 1 {
-        if let Expr::Atom(atom) = expr[0].clone() {
+pub fn execute(exprs: &Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
+    let mut exprs = exprs.clone();
+
+    if exprs.len() == 1 {
+        if let Expr::Atom(atom) = exprs[0].clone() {
             // return Ok(expr[0].clone());
             // extract symbol and return value if any
             match atom {
@@ -95,14 +97,15 @@ pub fn execute(expr: &mut Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError
             }
         }
     }
-    let first_arg = expr.remove(0);
+
+    let first_arg = exprs.remove(0);
     match first_arg {
-        Expr::Func(func) => func(expr.to_vec(), env),
+        Expr::Func(func) => func(exprs.to_vec(), env),
         Expr::Atom(Atom::Symbol(symbol)) => {
             if env.contains_key(symbol.as_str()) {
                 let func = &env[symbol.as_str()];
-                expr.insert(0, func.clone());
-                execute(expr, env)
+                exprs.insert(0, func.clone());
+                execute(&exprs, env)
             } else {
                 Err(SpressoError::from(RuntimeError::from(format!(
                     "Symbol not found: {}",
@@ -111,6 +114,14 @@ pub fn execute(expr: &mut Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError
             }
         }
         Expr::List(mut exprs) => execute(&mut exprs, env),
+        Expr::Lambda(lambda) => {
+            // TODO: multiple args
+            let arg = execute(&mut vec![exprs[0].clone()], env)?;
+            env.in_new_scope(|env| {
+                env.insert(lambda.params[0].as_str(), arg.clone());
+                execute(&mut vec![*lambda.body.clone()], env)
+            })
+        }
         _ => Err(SpressoError::from(RuntimeError::from(format!(
             "Why you calling something else, when it's not function: {}",
             first_arg
