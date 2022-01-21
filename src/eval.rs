@@ -115,12 +115,26 @@ pub fn execute(exprs: &Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
         }
         Expr::List(mut exprs) => execute(&mut exprs, env),
         Expr::Lambda(lambda) => {
-            // TODO: multiple args
-            let arg = execute(&mut vec![exprs[0].clone()], env)?;
-            env.in_new_scope(|env| {
-                env.insert(lambda.params[0].as_str(), arg.clone());
-                execute(&lambda.body, env)
-            })
+            let args: Result<Vec<Expr>, SpressoError> = exprs
+                .into_iter()
+                .map(|arg| execute(&mut vec![arg], env))
+                .collect();
+            let args = args?;
+
+            if args.len() != lambda.params.len() {
+                Err(SpressoError::from(RuntimeError::from(format!(
+                    "Expected {} arguments, got {}",
+                    lambda.params.len(),
+                    args.len()
+                ))))
+            } else {
+                env.in_new_scope(|env| {
+                    args.into_iter().enumerate().for_each(|(i, arg)| {
+                        env.insert(lambda.params[i].as_str(), arg);
+                    });
+                    execute(&lambda.body, env)
+                })
+            }
         }
         _ => Err(SpressoError::from(RuntimeError::from(format!(
             "Why you calling something else, when it's not function: {}",
@@ -153,17 +167,32 @@ pub fn lambda(args: Vec<Expr>, _env: &mut Env) -> Result<Expr, SpressoError> {
     let fn_params = args[0].clone();
     let body = args[1..].to_vec();
 
-    // TODO: support multiple parameters (tuple of args)
-    // for now only single parameters
-
-    if let Expr::Atom(Atom::Symbol(fn_param)) = fn_params {
-        Ok(Expr::Lambda(Lambda {
+    match fn_params {
+        Expr::Atom(Atom::Symbol(fn_param)) => Ok(Expr::Lambda(Lambda {
             params: vec![fn_param],
             body,
-        }))
-    } else {
-        Err(SpressoError::from(RuntimeError::from(
+        })),
+        Expr::List(fn_params) => {
+            let params: Result<Vec<String>, SpressoError> = fn_params
+                .into_iter()
+                .map(|param| {
+                    if let Expr::Atom(Atom::Symbol(param)) = param {
+                        Ok(param)
+                    } else {
+                        Err(SpressoError::from(RuntimeError::from(
+                            "lambda parameters must be a symbol",
+                        )))
+                    }
+                })
+                .collect();
+
+            Ok(Expr::Lambda(Lambda {
+                params: params?,
+                body,
+            }))
+        }
+        _ => Err(SpressoError::from(RuntimeError::from(
             "lambda parameters must be a symbol",
-        )))
+        ))),
     }
 }

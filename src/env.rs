@@ -31,6 +31,7 @@ impl Env {
     }
 
     pub fn insert(&mut self, key: &str, value: Expr) -> Option<Expr> {
+        // TODO: just take a String lmao
         if let Some(last) = self.scopes.last_mut() {
             last.insert(key.to_string(), value)
         } else {
@@ -48,7 +49,7 @@ impl Env {
 
     pub fn in_new_scope<F>(&mut self, f: F) -> Result<Expr, SpressoError>
     where
-        F: Fn(&mut Self) -> Result<Expr, SpressoError>,
+        F: FnOnce(&mut Self) -> Result<Expr, SpressoError>,
     {
         self.scopes.push(EnvMapType::new());
         let res = f(self);
