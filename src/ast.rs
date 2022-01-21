@@ -10,6 +10,7 @@ pub enum Expr {
     Atom(Atom),
     List(Vec<Expr>),
     Func(FuncType),
+    Lambda(Lambda),
 }
 
 impl fmt::Display for Expr {
@@ -126,6 +127,18 @@ impl std::ops::Div<Number> for Number {
     }
 }
 
+#[derive(Clone)]
+pub struct Lambda {
+    pub params: Vec<String>,
+    pub body: Vec<Expr>,
+}
+
+impl fmt::Display for Lambda {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "λ: [{}] -> ...", self.params.join(", "))
+    }
+}
+
 fn pretty_ast(ast: &Expr, level: usize, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     fn type_name_of<T>(_: T) -> &'static str {
         std::any::type_name::<T>()
@@ -140,5 +153,6 @@ fn pretty_ast(ast: &Expr, level: usize, f: &mut fmt::Formatter<'_>) -> fmt::Resu
         }
         Expr::Atom(token) => write!(f, "{}{}\n", "\t".repeat(level), token),
         Expr::Func(func) => write!(f, "{}{}\n", "\t".repeat(level), type_name_of(func)),
+        Expr::Lambda(lambda) => write!(f, "{}{}\n", "\t".repeat(level), lambda),
     }
 }
