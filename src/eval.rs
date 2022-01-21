@@ -119,7 +119,7 @@ pub fn execute(exprs: &Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
             let arg = execute(&mut vec![exprs[0].clone()], env)?;
             env.in_new_scope(|env| {
                 env.insert(lambda.params[0].as_str(), arg.clone());
-                execute(&mut vec![*lambda.body.clone()], env)
+                execute(&lambda.body, env)
             })
         }
         _ => Err(SpressoError::from(RuntimeError::from(format!(
@@ -144,14 +144,14 @@ pub fn print(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
 }
 
 pub fn lambda(args: Vec<Expr>, _env: &mut Env) -> Result<Expr, SpressoError> {
-    if args.len() != 2 {
+    if args.len() < 2 {
         return Err(SpressoError::from(RuntimeError::from(
-            "A lambda definition must have a param list and a body",
+            "A lambda definition must have a param list and a body (any number of lists)",
         )));
     }
 
     let fn_params = args[0].clone();
-    let body = args[1].clone();
+    let body = args[1..].to_vec();
 
     // TODO: support multiple parameters (tuple of args)
     // for now only single parameters
@@ -159,7 +159,7 @@ pub fn lambda(args: Vec<Expr>, _env: &mut Env) -> Result<Expr, SpressoError> {
     if let Expr::Atom(Atom::Symbol(fn_param)) = fn_params {
         Ok(Expr::Lambda(Lambda {
             params: vec![fn_param],
-            body: Box::new(body),
+            body,
         }))
     } else {
         Err(SpressoError::from(RuntimeError::from(

@@ -130,7 +130,7 @@ impl std::ops::Div<Number> for Number {
 #[derive(Clone)]
 pub struct Lambda {
     pub params: Vec<String>,
-    pub body: Box<Expr>,
+    pub body: Vec<Expr>,
 }
 
 impl fmt::Display for Lambda {
