@@ -5,7 +5,10 @@ lisp in rust
 ## TODO
 - [ ] functions ( lambdas )
 - [ ] debug env? ( .debug )
-- [ ] conditionals
+- [X] conditionals
+- [ ] relational ops
+- [ ] conditional ops
+- [ ] strings
 - [ ] loops
 - [ ] functional programming stuff
   - [ ] map
