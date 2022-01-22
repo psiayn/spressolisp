@@ -1,7 +1,7 @@
 use crate::{
     ast::{Atom, Expr, Number},
     env::Env,
-    errors::{NumericError, RuntimeError, SpressoError, SyntaxError},
+    errors::{NumericError, RuntimeError, SpressoError},
 };
 
 fn number_op(
@@ -149,8 +149,12 @@ pub fn if_cond(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
             execute(&mut vec![true_cond], env)
         } else {
             // execute false
-            let false_cond = args.pop().unwrap();
-            execute(&mut vec![false_cond], env)
+            if args.len() > 1 {
+                let false_cond = args.pop().unwrap();
+                execute(&mut vec![false_cond], env)
+            } else {
+                Ok(Expr::Atom(Atom::Bool(false)))
+            }
         }
     } else {
         Err(SpressoError::from(RuntimeError::from(
