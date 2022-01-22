@@ -1,4 +1,8 @@
-use crate::{ast::{Atom, Expr, Number}, env::Env, errors::{NumericError, RuntimeError, SpressoError, SyntaxError}};
+use crate::{
+    ast::{Atom, Expr, Number},
+    env::Env,
+    errors::{NumericError, RuntimeError, SpressoError, SyntaxError},
+};
 
 fn number_op(
     args: Vec<Expr>,
@@ -131,26 +135,27 @@ pub fn print(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
 pub fn if_cond(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
     let mut args = args.clone();
     let cond = args.remove(0);
-    match execute(&mut vec!(cond), env) {
-	Ok(res) => {
-	    match res {
-		Expr::Atom(Atom::Bool(boolean)) => {
-		    if boolean {
-			// execute true
-			let true_cond = args.remove(0);
-			return execute(&mut vec!(true_cond), env);
-		    } else {
-			// execute false
-			let false_cond = args.pop().unwrap();
-			return execute(&mut vec!(false_cond), env);
-		    }
-		},
-		_ =>
-		    return Err(SpressoError::from(SyntaxError {
-			err: "Trying to use a non bool for condition".to_string(),
-		    })),
-	    }
-	},
-	Err(err) => Err(err),
+    match execute(&mut vec![cond], env) {
+        Ok(res) => {
+            match res {
+                Expr::Atom(Atom::Bool(boolean)) => {
+                    if boolean {
+                        // execute true
+                        let true_cond = args.remove(0);
+                        return execute(&mut vec![true_cond], env);
+                    } else {
+                        // execute false
+                        let false_cond = args.pop().unwrap();
+                        return execute(&mut vec![false_cond], env);
+                    }
+                }
+                _ => {
+                    return Err(SpressoError::from(SyntaxError {
+                        err: "Trying to use a non bool for condition".to_string(),
+                    }))
+                }
+            }
+        }
+        Err(err) => Err(err),
     }
 }
