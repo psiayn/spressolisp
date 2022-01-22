@@ -133,29 +133,28 @@ pub fn print(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
 }
 
 pub fn if_cond(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
+    if !(args.len() == 2 || args.len() == 3) {
+        return Err(SpressoError::from(RuntimeError::from("If statement should have a condition, expression to evaluate when true and optionally an expression to evaluate when false.")));
+    }
+
     let mut args = args.clone();
     let cond = args.remove(0);
-    match execute(&mut vec![cond], env) {
-        Ok(res) => {
-            match res {
-                Expr::Atom(Atom::Bool(boolean)) => {
-                    if boolean {
-                        // execute true
-                        let true_cond = args.remove(0);
-                        return execute(&mut vec![true_cond], env);
-                    } else {
-                        // execute false
-                        let false_cond = args.pop().unwrap();
-                        return execute(&mut vec![false_cond], env);
-                    }
-                }
-                _ => {
-                    return Err(SpressoError::from(SyntaxError {
-                        err: "Trying to use a non bool for condition".to_string(),
-                    }))
-                }
-            }
+
+    let cond = execute(&mut vec![cond], env)?;
+
+    if let Expr::Atom(Atom::Bool(boolean)) = cond {
+        if boolean {
+            // execute true
+            let true_cond = args.remove(0);
+            execute(&mut vec![true_cond], env)
+        } else {
+            // execute false
+            let false_cond = args.pop().unwrap();
+            execute(&mut vec![false_cond], env)
         }
-        Err(err) => Err(err),
+    } else {
+        Err(SpressoError::from(RuntimeError::from(
+            "Trying to use a non bool for condition",
+        )))
     }
 }
