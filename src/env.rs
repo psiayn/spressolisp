@@ -14,17 +14,27 @@ pub struct Env {
 impl Env {
     pub fn new() -> Self {
         let mut env = EnvMapType::new();
+	// arithmetic ops
         env.insert("+".to_string(), Expr::Func(eval::add));
         env.insert("*".to_string(), Expr::Func(eval::mul));
         env.insert("-".to_string(), Expr::Func(eval::sub));
         env.insert("/".to_string(), Expr::Func(eval::div));
-        env.insert("define".to_string(), Expr::Func(eval::define));
+
+	// keywords
+	env.insert("define".to_string(), Expr::Func(eval::define));
         env.insert("print".to_string(), Expr::Func(eval::print));
         env.insert("true".to_string(), Expr::Atom(Atom::Bool(true)));
         env.insert("false".to_string(), Expr::Atom(Atom::Bool(false)));
         env.insert("if".to_string(), Expr::Func(eval::if_cond));
+
+	// relational operators
 	env.insert(">".to_string(), Expr::Func(eval::gt));
 	env.insert("<".to_string(), Expr::Func(eval::lt));
+	env.insert(">=".to_string(), Expr::Func(eval::gteq));
+	env.insert("<=".to_string(), Expr::Func(eval::lteq));
+	env.insert("==".to_string(), Expr::Func(eval::eq));
+	env.insert("!=".to_string(), Expr::Func(eval::neq));	
+
         return Env { map: env };
     }
 
