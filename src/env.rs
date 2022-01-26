@@ -3,7 +3,7 @@ use std::ops::Index;
 
 use crate::ast::{Atom, Expr};
 
-use crate::eval::{add, define, div, if_cond, mul, print, sub};
+use crate::eval;
 
 pub type EnvMapType = HashMap<String, Expr>;
 
@@ -14,15 +14,17 @@ pub struct Env {
 impl Env {
     pub fn new() -> Self {
         let mut env = EnvMapType::new();
-        env.insert("+".to_string(), Expr::Func(add));
-        env.insert("*".to_string(), Expr::Func(mul));
-        env.insert("-".to_string(), Expr::Func(sub));
-        env.insert("/".to_string(), Expr::Func(div));
-        env.insert("define".to_string(), Expr::Func(define));
-        env.insert("print".to_string(), Expr::Func(print));
+        env.insert("+".to_string(), Expr::Func(eval::add));
+        env.insert("*".to_string(), Expr::Func(eval::mul));
+        env.insert("-".to_string(), Expr::Func(eval::sub));
+        env.insert("/".to_string(), Expr::Func(eval::div));
+        env.insert("define".to_string(), Expr::Func(eval::define));
+        env.insert("print".to_string(), Expr::Func(eval::print));
         env.insert("true".to_string(), Expr::Atom(Atom::Bool(true)));
         env.insert("false".to_string(), Expr::Atom(Atom::Bool(false)));
-        env.insert("if".to_string(), Expr::Func(if_cond));
+        env.insert("if".to_string(), Expr::Func(eval::if_cond));
+	env.insert(">".to_string(), Expr::Func(eval::gt));
+	env.insert("<".to_string(), Expr::Func(eval::lt));
         return Env { map: env };
     }
 

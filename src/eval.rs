@@ -1,8 +1,4 @@
-use crate::{
-    ast::{Atom, Expr, Number},
-    env::Env,
-    errors::{NumericError, RuntimeError, SpressoError},
-};
+use crate::{ast::{Atom, Expr, Number}, env::Env, errors::{NumericError, RuntimeError, SpressoError, SyntaxError}};
 
 fn number_op(
     args: Vec<Expr>,
@@ -73,6 +69,42 @@ pub fn div(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
     let mut args = args.clone();
     let start = extract_num(args.remove(0), env)?;
     number_op(args, env, start, |x, y| x / y)
+}
+
+pub fn lt(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
+    if args.len() != 2 {
+	return Err(SpressoError::from(
+	    SyntaxError::from(
+		"Tried to call < with more than 2 args"
+	    )))
+    }
+    
+    // execute the statements and get the results
+    let first = execute(&mut vec!(args[0].clone()), env)?;
+    let second = execute(&mut vec!(args[1].clone()), env)?;
+    // override by trying to extract num
+    let first = extract_num(first, env)?;
+    let second = extract_num(second, env)?;
+    // return result
+    Ok(Expr::Atom(Atom::Bool(first < second)))
+}
+
+pub fn gt(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
+    if args.len() != 2 {
+	return Err(SpressoError::from(
+	    SyntaxError::from(
+		"Tried to call > with more than 2 args"
+	    )))
+    }
+    
+    // execute the statements and get the results
+    let first = execute(&mut vec!(args[0].clone()), env)?;
+    let second = execute(&mut vec!(args[1].clone()), env)?;
+    // override by trying to extract num
+    let first = extract_num(first, env)?;
+    let second = extract_num(second, env)?;
+    // return result
+    Ok(Expr::Atom(Atom::Bool(first > second)))
 }
 
 pub fn execute(expr: &mut Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
