@@ -23,6 +23,7 @@ impl fmt::Display for Expr {
 pub enum Atom {
     Symbol(String),
     Number(Number),
+    Bool(bool),
 }
 
 impl fmt::Display for Atom {
@@ -30,11 +31,12 @@ impl fmt::Display for Atom {
         match self {
             Atom::Symbol(string) => write!(f, "{}", string),
             Atom::Number(num) => write!(f, "{}", num),
+            Atom::Bool(boolean) => write!(f, "{}", boolean),
         }
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, PartialOrd)]
 pub enum Number {
     Int(i64),
     Float(f64),
