@@ -10,6 +10,10 @@ lisp in rust
 - [ ] conditional ops
 - [ ] strings
 - [ ] loops
+- [ ] strings
+- [ ] cleanup code
+  - [ ] make env more functional
+- [ ] write more tests
 - [ ] functional programming stuff
   - [ ] map
   - [ ] reduce

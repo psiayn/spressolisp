@@ -3,12 +3,14 @@ use std::ops::Index;
 
 use crate::ast::{Atom, Expr};
 
+use crate::errors::SpressoError;
 use crate::eval;
 
 pub type EnvMapType = HashMap<String, Expr>;
 
 pub struct Env {
     map: EnvMapType,
+    scopes: Vec<EnvMapType>,
 }
 
 impl Env {
@@ -26,6 +28,7 @@ impl Env {
         env.insert("true".to_string(), Expr::Atom(Atom::Bool(true)));
         env.insert("false".to_string(), Expr::Atom(Atom::Bool(false)));
         env.insert("if".to_string(), Expr::Func(eval::if_cond));
+        env.insert("lambda".to_string(), Expr::Func(eval::lambda));
 
         // relational operators
         env.insert(">".to_string(), Expr::Func(eval::gt));
@@ -35,15 +38,37 @@ impl Env {
         env.insert("==".to_string(), Expr::Func(eval::eq));
         env.insert("!=".to_string(), Expr::Func(eval::neq));
 
-        return Env { map: env };
+        Env {
+            map: env,
+            scopes: Vec::new(),
+        }
     }
 
     pub fn insert(&mut self, key: &str, value: Expr) -> Option<Expr> {
-        self.map.insert(key.to_string(), value)
+        // TODO: just take a String lmao
+        if let Some(last) = self.scopes.last_mut() {
+            last.insert(key.to_string(), value)
+        } else {
+            self.map.insert(key.to_string(), value)
+        }
     }
 
     pub fn contains_key(&self, key: &str) -> bool {
-        self.map.contains_key(key)
+        if self.scopes.iter().rev().any(|map| map.contains_key(key)) {
+            true
+        } else {
+            self.map.contains_key(key)
+        }
+    }
+
+    pub fn in_new_scope<F>(&mut self, f: F) -> Result<Expr, SpressoError>
+    where
+        F: FnOnce(&mut Self) -> Result<Expr, SpressoError>,
+    {
+        self.scopes.push(EnvMapType::new());
+        let res = f(self);
+        self.scopes.pop();
+        res
     }
 
     pub fn display(&self) {
@@ -56,7 +81,12 @@ impl Env {
 impl Index<&str> for Env {
     type Output = Expr;
 
+    /// Ensure key exists or I panik!
     fn index(&self, key: &str) -> &Self::Output {
-        &self.map[key]
+        if let Some(scope) = self.scopes.iter().rev().find(|map| map.contains_key(key)) {
+            &scope[key]
+        } else {
+            &self.map[key]
+        }
     }
 }
