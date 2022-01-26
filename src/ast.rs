@@ -142,10 +142,6 @@ impl fmt::Display for Lambda {
 }
 
 fn pretty_ast(ast: &Expr, level: usize, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    fn type_name_of<T>(_: T) -> &'static str {
-        std::any::type_name::<T>()
-    }
-
     match ast {
         Expr::List(list) => {
             write!(f, "{}List\n", "\t".repeat(level)).unwrap();
@@ -154,7 +150,7 @@ fn pretty_ast(ast: &Expr, level: usize, f: &mut fmt::Formatter<'_>) -> fmt::Resu
                 .collect()
         }
         Expr::Atom(token) => write!(f, "{}{}\n", "\t".repeat(level), token),
-        Expr::Func(func) => write!(f, "{}{}\n", "\t".repeat(level), type_name_of(func)),
+        Expr::Func(..) => write!(f, "{}{}\n", "\t".repeat(level), "built-in function"),
         Expr::Lambda(lambda) => write!(f, "{}{}\n", "\t".repeat(level), lambda),
     }
 }

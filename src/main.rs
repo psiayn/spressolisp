@@ -40,13 +40,14 @@ fn main() {
                 let input = line.trim().to_string();
                 if input == ".quit" {
                     break;
-                } else if input == ".ast" {
+                } else if input == ".env" {
                     env.display();
+                } else {
+                    match evaluate_expression(input, &mut env) {
+                        Ok(res) => println!("{}", res),
+                        Err(err) => println!("{}", err),
+                    };
                 }
-                match evaluate_expression(input, &mut env) {
-                    Ok(res) => println!("{}", res),
-                    Err(err) => println!("{}", err),
-                };
             }
             Err(ReadlineError::Interrupted) => break,
             Err(ReadlineError::Eof) => break,

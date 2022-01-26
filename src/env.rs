@@ -73,7 +73,7 @@ impl Env {
 
     pub fn display(&self) {
         for (key, value) in &self.map {
-            println!("{}: {}", key, value);
+            print!("{}\t:\t{}", key, value);
         }
     }
 }
