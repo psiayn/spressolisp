@@ -8,3 +8,11 @@ edition = "2018"
 [dependencies]
 rustyline = "9.1.0"
 home = "0.5.3"
+
+[dev-dependencies]
+# benchmarking
+criterion = "0.3"
+
+[[bench]]
+name = "spresso_benchmark"
+harness = false
