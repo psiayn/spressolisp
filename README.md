@@ -3,17 +3,19 @@ lisp in rust
 
 
 ## TODO
-- [ ] functions ( lambdas )
-- [ ] debug env? ( .debug )
+- [x] functions ( lambdas )
+- [x] debug env? ( .debug )
 - [X] conditionals
-- [ ] relational ops
+- [x] relational ops
 - [ ] conditional ops
 - [ ] strings
 - [ ] loops
-- [ ] strings
 - [ ] cleanup code
   - [ ] make env more functional
-- [ ] write more tests
+- [ ] tests for floats
+- [ ] tests for conditional
+- [ ] tests for lambdas
+- [ ] tests for strings
 - [ ] functional programming stuff
   - [ ] map
   - [ ] reduce
