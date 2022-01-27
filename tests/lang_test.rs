@@ -17,6 +17,53 @@ fn test_addition() {
 }
 
 #[test]
+fn test_add_many_1s() {
+    let mut env = Env::new();
+
+    let num = 100;
+    let mut input = String::new();
+    input.push_str("(+");
+    for _ in 0..num {
+        input.push_str(" 1");
+    }
+    input.push_str(")");
+
+    if let Ok(res) = evaluate_expression(input, &mut env) {
+        if let Ok(Number::Int(res)) = extract_num(res, &mut env) {
+            assert_eq!(res, num);
+        } else {
+            assert!(false, "Result was not an integer");
+        }
+    } else {
+        assert!(false, "Error evaluating expression");
+    }
+}
+
+#[test]
+fn test_add_many_1s_nested() {
+    let mut env = Env::new();
+
+    let num = 100;
+    let mut input = String::new();
+    for _ in 0..num {
+        input.push_str("(+ 1 ");
+    }
+    for _ in 0..num {
+        input.push_str(")");
+    }
+
+    if let Ok(res) = evaluate_expression(input, &mut env) {
+        if let Ok(Number::Int(res)) = extract_num(res, &mut env) {
+            assert_eq!(res, num);
+        } else {
+            assert!(false, "Result was not an integer");
+        }
+    } else {
+        assert!(false, "Error evaluating expression");
+    }
+}
+
+#[test]
 fn test_wrong_syntax() {
     let mut env = Env::new();
     let inp = evaluate_expression("(+ 12 32".to_string(), &mut env);
