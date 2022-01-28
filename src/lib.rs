@@ -3,13 +3,15 @@ pub mod env;
 pub mod errors;
 pub mod eval;
 
+use std::collections::VecDeque;
+
 use crate::ast::{Atom, Expr, Number};
 use crate::env::Env;
 use crate::errors::{RuntimeError, SpressoError, SyntaxError};
 use crate::eval::execute;
 
 pub fn evaluate_expression(input: String, env: &mut Env) -> Result<Expr, SpressoError> {
-    let mut tokenized_input: Vec<String> = tokenize(input);
+    let mut tokenized_input: VecDeque<String> = tokenize(input);
     let ast = parse(&mut tokenized_input)?;
     match ast {
         Expr::List(mut exprs) => execute(&mut exprs, env),
@@ -20,7 +22,7 @@ pub fn evaluate_expression(input: String, env: &mut Env) -> Result<Expr, Spresso
     }
 }
 
-fn tokenize(input: String) -> Vec<String> {
+fn tokenize(input: String) -> VecDeque<String> {
     let input: String = input.replace("(", " ( ").replace(")", " ) ");
     let res = input
         .split_whitespace()
@@ -29,11 +31,13 @@ fn tokenize(input: String) -> Vec<String> {
     return res;
 }
 
-fn parse(tokens: &mut Vec<String>) -> Result<Expr, SyntaxError> {
-    if tokens.len() == 0 {
-        return Err(SyntaxError::from("Unexpected EOF".to_string()));
-    }
-    let token = tokens.remove(0);
+fn parse(tokens: &mut VecDeque<String>) -> Result<Expr, SyntaxError> {
+    let token = match tokens.pop_front() {
+        Some(token) => token,
+        // no tokens (vec was empty)
+        None => return Err(SyntaxError::from("Unexpected EOF".to_string())),
+    };
+
     match token.as_str() {
         "(" => {
             // collect everything before ")"
@@ -44,11 +48,11 @@ fn parse(tokens: &mut Vec<String>) -> Result<Expr, SyntaxError> {
                 ast.push(inner_ast);
             }
 
-            if tokens.is_empty() {
+            // there should be a closing ")" after parsing everything inside
+            if let None = tokens.pop_front() {
                 return Err(SyntaxError::from("'(' not closed"));
             }
 
-            tokens.remove(0);
             return Ok(Expr::List(ast));
         }
         ")" => return Err(SyntaxError::from("Unexpected ')'")),
