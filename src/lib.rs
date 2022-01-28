@@ -56,16 +56,39 @@ fn parse(tokens: &mut VecDeque<String>) -> Result<Expr, SyntaxError> {
             return Ok(Expr::List(ast));
         }
         ")" => return Err(SyntaxError::from("Unexpected ')'")),
-        _ => Ok(Expr::Atom(parse_int(token))),
+        _ => Ok(Expr::Atom(parse_atom(token)?)),
     }
 }
 
-fn parse_int(token: String) -> Atom {
-    match token.parse::<i64>() {
-        Ok(num) => return Atom::Number(Number::Int(num)),
-        Err(_) => match token.parse::<f64>() {
-            Ok(num) => return Atom::Number(Number::Float(num)),
-            Err(_) => Atom::Symbol(token),
+fn parse_atom(token: String) -> Result<Atom, SyntaxError> {
+    let first_char = match token.chars().next() {
+        Some(char) => char,
+        None => return Err(SyntaxError::from("Expected something, found nothing?")),
+    };
+
+    match first_char {
+        '0'..='9' | '.' => {
+            if let Ok(num) = token.parse::<i64>() {
+                return Ok(Atom::Number(Number::Int(num)));
+            }
+
+            if let Ok(num) = token.parse::<f64>() {
+                return Ok(Atom::Number(Number::Float(num)));
+            }
+
+            Err(SyntaxError::from("Symbols cannot start with a number"))
         },
+        '"' => {
+            let str_without_quotes = match token.strip_suffix("\"") {
+                Some(s) => s,
+                None => return Err(SyntaxError::from("String not closed")),
+            };
+
+            // we know it already start with " so belieb in unwrap
+            let str_without_quotes = str_without_quotes.strip_prefix("\"").unwrap();
+
+            Ok(Atom::String(str_without_quotes.to_string()))
+        }
+        _ => Ok(Atom::Symbol(token))
     }
 }

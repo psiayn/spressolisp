@@ -24,6 +24,7 @@ pub enum Atom {
     Symbol(String),
     Number(Number),
     Bool(bool),
+    String(String),
 }
 
 impl fmt::Display for Atom {
@@ -32,6 +33,7 @@ impl fmt::Display for Atom {
             Atom::Symbol(string) => write!(f, "{}", string),
             Atom::Number(num) => write!(f, "{}", num),
             Atom::Bool(boolean) => write!(f, "{}", boolean),
+            Atom::String(string) => write!(f, "\"{}\"", string),
         }
     }
 }
