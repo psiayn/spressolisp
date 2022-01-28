@@ -129,6 +129,7 @@ impl std::ops::Div<Number> for Number {
     }
 }
 
+
 #[derive(Clone)]
 pub struct Lambda {
     pub params: Vec<String>,

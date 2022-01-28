@@ -7,7 +7,7 @@ lisp in rust
 - [x] debug env? ( .debug )
 - [X] conditionals
 - [x] relational ops
-- [ ] conditional ops
+- [x] logical ops
 - [ ] strings
 - [ ] loops
 - [ ] cleanup code

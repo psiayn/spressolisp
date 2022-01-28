@@ -38,6 +38,11 @@ impl Env {
         env.insert("==".to_string(), Expr::Func(eval::eq));
         env.insert("!=".to_string(), Expr::Func(eval::neq));
 
+        // logical operators
+        env.insert("not".to_string(), Expr::Func(eval::not));
+        env.insert("and".to_string(), Expr::Func(eval::and));
+        env.insert("or".to_string(), Expr::Func(eval::or));
+
         Env {
             map: env,
             scopes: Vec::new(),
