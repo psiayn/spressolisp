@@ -12,10 +12,10 @@ lisp in rust
 - [ ] loops
 - [ ] cleanup code
   - [ ] make env more functional
-- [ ] tests for floats
-- [ ] tests for conditional
-- [ ] tests for lambdas
-- [ ] tests for strings
+- [x] tests for floats
+- [x] tests for conditional
+- [x] tests for lambdas
+- [x] tests for strings
 - [ ] functional programming stuff
   - [ ] map
   - [ ] reduce
