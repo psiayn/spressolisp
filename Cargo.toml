@@ -9,3 +9,11 @@ edition = "2018"
 rustyline = "9.1.0" # for the repl
 home = "0.5.3" # for getting home_dir
 assert_float_eq = "1.1.1" # floating point asserts fail
+
+[dev-dependencies]
+# benchmarking
+criterion = "0.3"
+
+[[bench]]
+name = "spresso_benchmark"
+harness = false

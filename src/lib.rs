@@ -36,20 +36,18 @@ fn parse(tokens: &mut Vec<String>) -> Result<Expr, SyntaxError> {
     let token = tokens.remove(0);
     match token.as_str() {
         "(" => {
-            if tokens.len() == 0 {
+            // collect everything before ")"
+            let mut ast: Vec<Expr> = Vec::new();
+            while !tokens.is_empty() && tokens[0] != ")" {
+                // recursively parse each of them
+                let inner_ast = parse(tokens)?;
+                ast.push(inner_ast);
+            }
+
+            if tokens.is_empty() {
                 return Err(SyntaxError::from("'(' not closed"));
             }
-            let mut ast: Vec<Expr> = Vec::new();
-            while tokens[0] != ")" {
-                let inner_ast = match parse(tokens) {
-                    Ok(res) => res,
-                    Err(e) => return Err(e),
-                };
-                ast.push(inner_ast);
-                if tokens.len() == 0 {
-                    return Err(SyntaxError::from("'(' not closed"));
-                }
-            }
+
             tokens.remove(0);
             return Ok(Expr::List(ast));
         }
