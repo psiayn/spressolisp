@@ -8,7 +8,10 @@ lisp in rust
 - [X] conditionals
 - [x] relational ops
 - [x] logical ops
-- [ ] strings
+- [x] strings
+- [ ] revamp tokenizer and parser
+    - [ ] strings with spaces in them
+    - [ ] track line and col num for each token
 - [ ] loops
 - [ ] cleanup code
   - [ ] make env more functional
