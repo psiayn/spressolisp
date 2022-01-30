@@ -2,7 +2,7 @@ use crate::{
     ast::{Atom, Expr, Lambda},
     env::Env,
     errors::{RuntimeError, SpressoError},
-    eval::{execute, execute_single},
+    eval::execute_single,
 };
 
 pub fn lambda(args: Vec<Expr>, _env: &mut Env) -> Result<Expr, SpressoError> {
@@ -67,7 +67,16 @@ pub fn execute_lambda(
             args.into_iter().enumerate().for_each(|(i, arg)| {
                 env.insert(lambda.params[i].as_str(), arg);
             });
-            execute(&mut lambda.body.clone(), env)
+
+            lambda
+                .body
+                .clone()
+                .into_iter()
+                .map(|expr| execute_single(expr, env))
+                .take_while(Result::is_ok)
+                .last()
+                // TODO: replace this with empty value (unit?)
+                .unwrap_or(Ok(Expr::Atom(Atom::Bool(false))))
         })
     }
 }

@@ -2,7 +2,7 @@ use crate::{
     ast::{Atom, Expr},
     env::Env,
     errors::{RuntimeError, SpressoError},
-    eval::{execute, execute_single},
+    eval::execute_single,
 };
 
 pub fn while_loop(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
@@ -12,11 +12,13 @@ pub fn while_loop(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> 
         )));
     }
     let condition = execute_single(args[0].clone(), env)?;
-    let mut body = args[1..].to_vec();
+    let body = args[1..].to_vec();
 
     if let Expr::Atom(Atom::Bool(mut cond)) = condition {
         while cond {
-            execute(&mut body, env)?;
+            for expr in body.clone() {
+                execute_single(expr, env)?;
+            }
             if let Expr::Atom(Atom::Bool(boolean)) = execute_single(args[0].clone(), env)? {
                 cond = boolean;
             } else {
