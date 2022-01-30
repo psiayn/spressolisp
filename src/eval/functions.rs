@@ -67,7 +67,7 @@ pub fn execute_lambda(
             args.into_iter().enumerate().for_each(|(i, arg)| {
                 env.insert(lambda.params[i].as_str(), arg);
             });
-            execute(&lambda.body, env)
+            execute(&mut lambda.body.clone(), env)
         })
     }
 }

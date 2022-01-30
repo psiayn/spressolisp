@@ -3,7 +3,7 @@ use std::ops::Index;
 
 use crate::ast::{Atom, Expr};
 
-use crate::errors::SpressoError;
+use crate::errors::{RuntimeError, SpressoError};
 use crate::eval;
 
 pub type EnvMapType = HashMap<String, Expr>;
@@ -64,6 +64,17 @@ impl Env {
             true
         } else {
             self.map.contains_key(key)
+        }
+    }
+
+    pub fn get_symbol(&self, key: &str) -> Result<Expr, SpressoError> {
+        if self.contains_key(key) {
+            Ok(self[key].clone())
+        } else {
+            Err(SpressoError::from(RuntimeError::from(format!(
+                "Symbol not found: {}",
+                key
+            ))))
         }
     }
 

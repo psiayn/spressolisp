@@ -15,38 +15,35 @@ pub use relational::*;
 use crate::{
     ast::{Atom, Expr},
     env::Env,
-    errors::{RuntimeError, SpressoError},
+    errors::SpressoError,
 };
 
-pub fn execute(exprs: &Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
-    let mut exprs = exprs.clone();
-
-    let first_arg = exprs.remove(0);
+pub fn execute(exprs: &mut Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
+    let first_arg = exprs[0].clone();
     match first_arg {
-        Expr::Func(func) => func(exprs.to_vec(), env),
+        Expr::Func(func) => func(exprs[1..].to_vec(), env),
         Expr::Atom(Atom::Symbol(symbol)) => {
-            if env.contains_key(symbol.as_str()) {
-                let sym = env[symbol.as_str()].clone();
+            let sym = env.get_symbol(symbol.as_str())?;
 
-                if !exprs.is_empty() {
-                    exprs.insert(0, sym);
-                    execute(&exprs, env)
-                } else {
-                    Ok(sym)
-                }
+            if exprs.len() > 1 {
+                exprs[0] = sym;
+                execute(exprs, env)
             } else {
-                Err(SpressoError::from(RuntimeError::from(format!(
-                    "Symbol not found: {}",
-                    symbol
-                ))))
+                Ok(sym)
             }
         }
+        Expr::Lambda(lambda) => execute_lambda(lambda, exprs[1..].to_vec(), env),
+        _ => execute_single(first_arg, env),
+    }
+}
+
+pub fn execute_single(expr: Expr, env: &mut Env) -> Result<Expr, SpressoError> {
+    match expr {
+        Expr::Func(func) => func(vec![], env),
+        Expr::Atom(Atom::Symbol(symbol)) => Ok(env.get_symbol(symbol.as_str())?),
         Expr::List(mut exprs) => execute(&mut exprs, env),
-        Expr::Lambda(lambda) => execute_lambda(lambda, exprs, env),
-        _ => Err(SpressoError::from(RuntimeError::from(format!(
-            "Why you calling something else, when it's not function: {}",
-            first_arg
-        )))),
+        Expr::Lambda(lambda) => execute_lambda(lambda, vec![], env),
+        Expr::Atom(_) => Ok(expr),
     }
 }
 
