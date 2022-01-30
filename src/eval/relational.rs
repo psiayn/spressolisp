@@ -2,7 +2,7 @@ use crate::{
     ast::{Atom, Expr},
     env::Env,
     errors::{SpressoError, SyntaxError},
-    eval::{execute, extract_num},
+    eval::{execute_single, extract_num},
 };
 
 pub fn lt(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
@@ -13,8 +13,8 @@ pub fn lt(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
     }
 
     // execute the statements and get the results
-    let first = execute(&mut vec![args[0].clone()], env)?;
-    let second = execute(&mut vec![args[1].clone()], env)?;
+    let first = execute_single(args[0].clone(), env)?;
+    let second = execute_single(args[1].clone(), env)?;
     // override by trying to extract num
     let first = extract_num(first, env)?;
     let second = extract_num(second, env)?;
@@ -30,8 +30,8 @@ pub fn lteq(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
     }
 
     // execute the statements and get the results
-    let first = execute(&mut vec![args[0].clone()], env)?;
-    let second = execute(&mut vec![args[1].clone()], env)?;
+    let first = execute_single(args[0].clone(), env)?;
+    let second = execute_single(args[1].clone(), env)?;
     // override by trying to extract num
     let first = extract_num(first, env)?;
     let second = extract_num(second, env)?;
@@ -47,8 +47,8 @@ pub fn gt(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
     }
 
     // execute the statements and get the results
-    let first = execute(&mut vec![args[0].clone()], env)?;
-    let second = execute(&mut vec![args[1].clone()], env)?;
+    let first = execute_single(args[0].clone(), env)?;
+    let second = execute_single(args[1].clone(), env)?;
     // override by trying to extract num
     let first = extract_num(first, env)?;
     let second = extract_num(second, env)?;
@@ -64,8 +64,8 @@ pub fn gteq(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
     }
 
     // execute the statements and get the results
-    let first = execute(&mut vec![args[0].clone()], env)?;
-    let second = execute(&mut vec![args[1].clone()], env)?;
+    let first = execute_single(args[0].clone(), env)?;
+    let second = execute_single(args[1].clone(), env)?;
     // override by trying to extract num
     let first = extract_num(first, env)?;
     let second = extract_num(second, env)?;
@@ -81,8 +81,8 @@ pub fn eq(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
     }
 
     // execute the statements and get the results
-    let first = execute(&mut vec![args[0].clone()], env)?;
-    let second = execute(&mut vec![args[1].clone()], env)?;
+    let first = execute_single(args[0].clone(), env)?;
+    let second = execute_single(args[1].clone(), env)?;
     // override by trying to extract num
     let first = extract_num(first, env)?;
     let second = extract_num(second, env)?;
@@ -98,8 +98,8 @@ pub fn neq(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
     }
 
     // execute the statements and get the results
-    let first = execute(&mut vec![args[0].clone()], env)?;
-    let second = execute(&mut vec![args[1].clone()], env)?;
+    let first = execute_single(args[0].clone(), env)?;
+    let second = execute_single(args[1].clone(), env)?;
     // override by trying to extract num
     let first = extract_num(first, env)?;
     let second = extract_num(second, env)?;

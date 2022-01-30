@@ -2,7 +2,7 @@ use crate::{
     ast::{Atom, Expr, Lambda},
     env::Env,
     errors::{RuntimeError, SpressoError},
-    eval::execute,
+    eval::{execute, execute_single},
 };
 
 pub fn lambda(args: Vec<Expr>, _env: &mut Env) -> Result<Expr, SpressoError> {
@@ -52,7 +52,7 @@ pub fn execute_lambda(
 ) -> Result<Expr, SpressoError> {
     let args: Result<Vec<Expr>, SpressoError> = args
         .into_iter()
-        .map(|arg| execute(&mut vec![arg], env))
+        .map(|arg| execute_single(arg, env))
         .collect();
     let args = args?;
 
