@@ -89,8 +89,8 @@ fn tokenize(input: String) -> VecDeque<Token> {
                 // take everything until some other token is found
                 // TODO: move this set of chars somewhere else
                 let new_chars = chars.peeking_take_while(|c| match c {
-                    ' ' | '\n' | '(' | ')' => true,
-                    _ => false,
+                    ' ' | '\n' | '(' | ')' => false,
+                    _ => true,
                 });
                 new_token.extend(new_chars);
 
