@@ -3,12 +3,14 @@ mod functions;
 mod logical;
 mod number;
 mod relational;
+mod loops;
 
 pub use conditional::*;
 pub use functions::*;
 pub use logical::*;
 pub use number::*;
 pub use relational::*;
+pub use loops::*;
 
 use crate::{
     ast::{Atom, Expr},
@@ -95,5 +97,6 @@ pub fn define(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
 pub fn print(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
     let mut args = args.clone();
     let result = execute(&mut args, env)?;
+    println!("{}", result);
     Ok(result)
 }

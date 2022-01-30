@@ -29,6 +29,7 @@ impl Env {
         env.insert("false".to_string(), Expr::Atom(Atom::Bool(false)));
         env.insert("if".to_string(), Expr::Func(eval::if_cond));
         env.insert("lambda".to_string(), Expr::Func(eval::lambda));
+        env.insert("loop".to_string(), Expr::Func(eval::while_loop));
 
         // relational operators
         env.insert(">".to_string(), Expr::Func(eval::gt));
