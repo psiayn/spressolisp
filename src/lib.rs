@@ -8,6 +8,8 @@ use std::iter::Peekable;
 use std::rc::Rc;
 use std::str::Chars;
 
+use itertools::Itertools;
+
 use crate::ast::{Atom, Expr, Number};
 use crate::env::Env;
 use crate::errors::{RuntimeError, SpressoError, SyntaxError};
@@ -37,6 +39,7 @@ fn tokenize(input: String) -> VecDeque<Token> {
     let program_text = Rc::new(input);
     let mut tokens = VecDeque::new();
 
+    // we start from 1 here
     let mut line_num = 1;
     let mut col_num = 1;
 
@@ -50,15 +53,12 @@ fn tokenize(input: String) -> VecDeque<Token> {
             '(' => Some(new_token),
             ')' => Some(new_token),
             '0'..='9' | '.' => {
-                loop {
-                    // TODO: ensure only one "." in number
-                    match chars.peek() {
-                        Some('0'..='9') | Some('.') => new_token.push(chars.next().unwrap()),
-                        Some(_) => break,
-                        None => break,
-                    }
-                }
-
+                // takes as long as numbers are found
+                let new_chars = chars.peeking_take_while(|c| match c {
+                    '0'..='9' | '.' => true,
+                    _ => false,
+                });
+                new_token.extend(new_chars);
                 Some(new_token)
             }
             ' ' => {
@@ -71,40 +71,51 @@ fn tokenize(input: String) -> VecDeque<Token> {
                 None
             }
             '"' => {
-                loop {
-                    match chars.peek() {
-                        Some('"') => {
-                            new_token.push(chars.next().unwrap());
-                            break;
-                        }
-                        Some(_) => new_token.push(chars.next().unwrap()),
-                        None => break,
-                    }
+                // takes everything before closing '"'
+                let new_chars = chars.peeking_take_while(|c| match c {
+                    '"' => false,
+                    _ => true,
+                });
+                new_token.extend(new_chars);
+
+                // check if string is closed
+                if let Some('"') = chars.peek() {
+                    new_token.push(chars.next().unwrap());
                 }
 
                 Some(new_token)
             }
             _ => {
-                loop {
-                    match chars.peek() {
-                        Some(' ' | '\n' | '(' | ')') => break,
-                        Some(_) => new_token.push(chars.next().unwrap()),
-                        None => break,
-                    }
-                }
+                // take everything until some other token is found
+                // TODO: move this set of chars somewhere else
+                let new_chars = chars.peeking_take_while(|c| match c {
+                    ' ' | '\n' | '(' | ')' => true,
+                    _ => false,
+                });
+                new_token.extend(new_chars);
 
                 Some(new_token)
             }
         }
     };
 
+    // Rc::clone simply increases ref count
+    //   - it does not actually clone anything
     let program_text = Rc::clone(&program_text);
+    // we will be processing each char one by one using this single iterator
     let mut chars = program_text.chars().peekable();
 
+    // loop until chars are present
     while let Some(c) = chars.next() {
+        // record starting col number
         let col_num_start = col_num;
+
         if let Some(new_token) = char_processor(c, &mut chars, &mut line_num, &mut col_num) {
+            // new col number is old + size of current token
+            // when there isn't any token, char_processor handles
+            // incrementing col_num
             let col_num_end = col_num + new_token.len();
+
             tokens.push_back(Token {
                 text: new_token,
                 line_num,

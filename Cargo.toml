@@ -8,6 +8,7 @@ edition = "2018"
 [dependencies]
 rustyline = "9.1.0" # for the repl
 home = "0.5.3" # for getting home_dir
+itertools = "0.10.2" # better iterators
 
 [dev-dependencies]
 # benchmarking
