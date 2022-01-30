@@ -2,6 +2,7 @@ use crate::{
     ast::{Atom, Expr, Lambda},
     env::Env,
     errors::{RuntimeError, SpressoError},
+    eval::execute,
 };
 
 pub fn lambda(args: Vec<Expr>, _env: &mut Env) -> Result<Expr, SpressoError> {
@@ -41,5 +42,32 @@ pub fn lambda(args: Vec<Expr>, _env: &mut Env) -> Result<Expr, SpressoError> {
         _ => Err(SpressoError::from(RuntimeError::from(
             "lambda parameters must be a symbol",
         ))),
+    }
+}
+
+pub fn execute_lambda(
+    lambda: Lambda,
+    args: Vec<Expr>,
+    env: &mut Env,
+) -> Result<Expr, SpressoError> {
+    let args: Result<Vec<Expr>, SpressoError> = args
+        .into_iter()
+        .map(|arg| execute(&mut vec![arg], env))
+        .collect();
+    let args = args?;
+
+    if args.len() != lambda.params.len() {
+        Err(SpressoError::from(RuntimeError::from(format!(
+            "Expected {} arguments, got {}",
+            lambda.params.len(),
+            args.len()
+        ))))
+    } else {
+        env.in_new_scope(|env| {
+            args.into_iter().enumerate().for_each(|(i, arg)| {
+                env.insert(lambda.params[i].as_str(), arg);
+            });
+            execute(&lambda.body, env)
+        })
     }
 }
