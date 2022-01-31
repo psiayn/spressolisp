@@ -2,7 +2,7 @@ use crate::{
     ast::{Atom, Expr},
     env::Env,
     errors::{RuntimeError, SpressoError},
-    eval::execute,
+    eval::execute_single,
 };
 
 pub fn if_cond(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
@@ -13,18 +13,18 @@ pub fn if_cond(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
     let mut args = args.clone();
     let cond = args.remove(0);
 
-    let cond = execute(&mut vec![cond], env)?;
+    let cond = execute_single(cond, env)?;
 
     if let Expr::Atom(Atom::Bool(boolean)) = cond {
         if boolean {
             // execute true
             let true_cond = args.remove(0);
-            execute(&mut vec![true_cond], env)
+            execute_single(true_cond, env)
         } else {
             // execute false
             if args.len() > 1 {
                 let false_cond = args.pop().unwrap();
-                execute(&mut vec![false_cond], env)
+                execute_single(false_cond, env)
             } else {
                 Ok(Expr::Atom(Atom::Bool(false)))
             }
