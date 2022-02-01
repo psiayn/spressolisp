@@ -10,9 +10,10 @@ lisp in rust
 - [x] logical ops
 - [x] strings
 - [ ] revamp tokenizer and parser
-    - [ ] strings with spaces in them
+    - [x] strings with spaces in them
     - [ ] track line and col num for each token
-- [ ] loops
+- [x] loops
+- [ ] lists
 - [ ] cleanup code
   - [ ] make env more functional
 - [x] tests for floats
