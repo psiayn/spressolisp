@@ -15,7 +15,7 @@ pub use relational::*;
 use crate::{
     ast::{Atom, Expr},
     env::Env,
-    errors::SpressoError,
+    errors::{SpressoError, RuntimeError},
 };
 
 pub fn execute(exprs: &mut Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
@@ -60,4 +60,13 @@ pub fn print(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
     let result = execute(&mut args, env)?;
     println!("{}", result);
     Ok(result)
+}
+
+pub fn lists(args: Vec<Expr>, _: &mut Env) -> Result<Expr, SpressoError> {
+    if args.len() != 1 {
+        return Err(SpressoError::from(RuntimeError::from(
+            "' only needs one arg",
+        )));
+    }
+    Ok(args[0].clone())
 }

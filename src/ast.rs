@@ -15,7 +15,7 @@ pub enum Expr {
 
 impl fmt::Display for Expr {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        pretty_ast(self, 0, f)
+        print_expr(self, 0, f)
     }
 }
 
@@ -155,5 +155,21 @@ fn pretty_ast(ast: &Expr, level: usize, f: &mut fmt::Formatter<'_>) -> fmt::Resu
         Expr::Atom(token) => write!(f, "{}{}\n", "\t".repeat(level), token),
         Expr::Func(..) => write!(f, "{}{}\n", "\t".repeat(level), "built-in function"),
         Expr::Lambda(lambda) => write!(f, "{}{}\n", "\t".repeat(level), lambda),
+    }
+}
+
+fn print_expr(ast: &Expr, level: usize, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    match ast {
+        Expr::List(list) => {
+            write!(f, "[ ").unwrap();
+            let hmm = list.into_iter()
+                .map(|token| print_expr(token, level + 1, f))
+                .collect::<fmt::Result>();
+            write!(f, "] ").unwrap();
+            hmm
+        }
+        Expr::Atom(token) => write!(f, "{} ", token),
+        Expr::Func(..) => write!(f, "{} ", "built-in function"),
+        Expr::Lambda(lambda) => write!(f, "{} ", lambda),
     }
 }

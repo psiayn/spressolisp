@@ -20,6 +20,9 @@ lisp in rust
 - [x] tests for conditional
 - [x] tests for lambdas
 - [x] tests for strings
+- [ ] recursion
+- [ ] macros
+- [ ] write macro for tests so that we can reduce if else ladder
 - [ ] functional programming stuff
   - [ ] map
   - [ ] reduce

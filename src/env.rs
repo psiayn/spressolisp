@@ -44,6 +44,9 @@ impl Env {
         env.insert("and".to_string(), Expr::Func(eval::and));
         env.insert("or".to_string(), Expr::Func(eval::or));
 
+        // support for lists?
+        env.insert("'".to_string(), Expr::Func(eval::lists));
+        
         Env {
             map: env,
             scopes: Vec::new(),
