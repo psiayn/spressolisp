@@ -1,6 +1,8 @@
 use std::fmt;
 
-#[derive(Debug, Clone)]
+use crate::{display_and_mark, Token};
+
+#[derive(Clone)]
 pub enum SpressoError {
     Runtime(RuntimeError),
     Syntax(SyntaxError),
@@ -60,28 +62,46 @@ impl fmt::Display for RuntimeError {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct SyntaxError {
     pub err: String,
+    tokens: Option<Vec<Token>>,
 }
 
 impl From<&str> for SyntaxError {
     fn from(message: &str) -> Self {
         SyntaxError {
             err: message.to_string(),
+            tokens: None,
         }
     }
 }
 
 impl From<String> for SyntaxError {
     fn from(message: String) -> Self {
-        SyntaxError { err: message }
+        SyntaxError {
+            err: message,
+            tokens: None,
+        }
+    }
+}
+
+impl SyntaxError {
+    pub fn with_tokens(mut self, tokens: Vec<Token>) -> Self {
+        self.tokens = Some(tokens);
+        self
     }
 }
 
 impl fmt::Display for SyntaxError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "Syntax Error: {}", self.err)
+        write!(f, "Syntax Error: {}\n", self.err)?;
+
+        if let Some(tokens) = &self.tokens {
+            display_and_mark(f, tokens)?;
+        }
+
+        Ok(())
     }
 }
 

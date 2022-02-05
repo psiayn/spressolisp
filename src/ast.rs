@@ -21,8 +21,8 @@ impl Deref for ExprBox {
 }
 
 impl ExprBox {
-    fn display_and_mark(&self) {
-        display_and_mark(&self.tokens)
+    fn display_and_mark(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        display_and_mark(f, &self.tokens)
     }
 }
 

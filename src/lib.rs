@@ -3,6 +3,7 @@ pub mod env;
 pub mod errors;
 pub mod eval;
 
+use core::fmt;
 use std::cmp;
 use std::collections::{BTreeMap, VecDeque};
 use std::iter::Peekable;
@@ -29,7 +30,7 @@ pub fn evaluate_expression(input: String, env: &mut Env) -> Result<Expr, Spresso
 }
 
 #[derive(Clone)]
-struct Token {
+pub struct Token {
     text: String,
     // TODO: some tokens like string could go across multiple lines
     // store both line_num_start and line_num_end
@@ -40,9 +41,7 @@ struct Token {
     type_: TokenType,
 }
 
-fn display_and_mark(tokens: &Vec<Token>) {
-    println!("");
-
+fn display_and_mark(f: &mut fmt::Formatter<'_>, tokens: &Vec<Token>) -> fmt::Result {
     let mut line_map = BTreeMap::<usize, (usize, usize)>::new();
     let program_lines = Rc::clone(&tokens[0].program_lines);
 
@@ -59,20 +58,22 @@ fn display_and_mark(tokens: &Vec<Token>) {
     });
 
     for (line_num, (col_start, col_end)) in line_map.iter() {
-        println!(
-            "{0:<width$}| {1}",
+        write!(
+            f,
+            "{0:<width$}| {1}\n",
             line_num,
             program_lines[*line_num - 1],
             width = 4
-        );
-        println!(
+        )?;
+        write!(
+            f,
             "{space}{marker}",
             marker = "-".repeat(col_end - col_start),
             space = " ".repeat(col_start + 4 + 2 - 1)
-        );
+        )?;
     }
 
-    println!("");
+    Ok(())
 }
 
 #[derive(PartialEq, Clone)]
@@ -210,13 +211,14 @@ fn parse(tokens: &mut VecDeque<Token>) -> Result<Expr, SyntaxError> {
 
             // there should be a closing ")" after parsing everything inside
             if let None = tokens.pop_front() {
-                display_and_mark(&vec![token]);
-                return Err(SyntaxError::from("'(' not closed"));
+                return Err(SyntaxError::from("'(' not closed").with_tokens(vec![token]));
             }
 
             return Ok(Expr::List(ast));
         }
-        TokenType::CloseParen => return Err(SyntaxError::from("Unexpected ')'")),
+        TokenType::CloseParen => {
+            return Err(SyntaxError::from("Unexpected ')'").with_tokens(vec![token]))
+        }
         _ => Ok(Expr::Atom(parse_atom(token)?)),
     }
 }
@@ -224,7 +226,7 @@ fn parse(tokens: &mut VecDeque<Token>) -> Result<Expr, SyntaxError> {
 fn parse_atom(token: Token) -> Result<Atom, SyntaxError> {
     match token.type_ {
         TokenType::Number => {
-            let text = token.text;
+            let text = token.text.clone();
 
             if let Ok(num) = text.parse::<i64>() {
                 return Ok(Atom::Number(Number::Int(num)));
@@ -234,7 +236,7 @@ fn parse_atom(token: Token) -> Result<Atom, SyntaxError> {
                 return Ok(Atom::Number(Number::Float(num)));
             }
 
-            Err(SyntaxError::from("Could not parse number"))
+            Err(SyntaxError::from("Could not parse number").with_tokens(vec![token]))
         }
         // remove quotes from string token and store
         TokenType::String => Ok(Atom::String(
@@ -242,7 +244,7 @@ fn parse_atom(token: Token) -> Result<Atom, SyntaxError> {
         )),
         TokenType::Symbol => Ok(Atom::Symbol(token.text)),
         TokenType::OpenParen | TokenType::CloseParen => {
-            Err(SyntaxError::from("Cannot extract atom from these lol"))
+            Err(SyntaxError::from("Cannot extract atom from these lol").with_tokens(vec![token]))
         }
     }
 }
