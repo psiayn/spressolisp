@@ -10,6 +10,7 @@ use std::iter::Peekable;
 use std::rc::Rc;
 use std::str::Chars;
 
+use colored::Colorize;
 use itertools::Itertools;
 
 use crate::ast::{Atom, Expr, Number};
@@ -60,15 +61,14 @@ fn display_and_mark(f: &mut fmt::Formatter<'_>, tokens: &Vec<Token>) -> fmt::Res
     for (line_num, (col_start, col_end)) in line_map.iter() {
         write!(
             f,
-            "{0:<width$}| {1}\n",
-            line_num,
+            "{} {}\n",
+            format!("{:<width$}|", line_num, width = 4).blue(),
             program_lines[*line_num - 1],
-            width = 4
         )?;
         write!(
             f,
             "{space}{marker}",
-            marker = "-".repeat(col_end - col_start),
+            marker = "^".repeat(col_end - col_start).yellow(),
             space = " ".repeat(col_start + 4 + 2 - 1)
         )?;
     }

@@ -9,6 +9,8 @@ edition = "2018"
 rustyline = "9.1.0" # for the repl
 home = "0.5.3" # for getting home_dir
 itertools = "0.10.2" # better iterators
+# colors in terminal
+colored = "2"
 
 [dev-dependencies]
 # benchmarking

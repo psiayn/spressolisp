@@ -1,5 +1,7 @@
 use std::fmt;
 
+use colored::Colorize;
+
 use crate::{display_and_mark, Token};
 
 #[derive(Clone)]
@@ -95,7 +97,7 @@ impl SyntaxError {
 
 impl fmt::Display for SyntaxError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "Syntax Error: {}\n", self.err)?;
+        write!(f, "{}: {}\n", "Syntax Error".red(), self.err)?;
 
         if let Some(tokens) = &self.tokens {
             display_and_mark(f, tokens)?;
