@@ -33,6 +33,16 @@ struct Token {
     col_num_start: usize,
     col_num_end: usize,
     program_text: Rc<String>,
+    type_: TokenType,
+}
+
+#[derive(PartialEq)]
+enum TokenType {
+    OpenParen,
+    CloseParen,
+    Number,
+    String,
+    Symbol,
 }
 
 fn tokenize(input: String) -> VecDeque<Token> {
@@ -47,19 +57,21 @@ fn tokenize(input: String) -> VecDeque<Token> {
                           chars: &mut Peekable<Chars>,
                           line_num: &mut usize,
                           col_num: &mut usize|
-     -> Option<String> {
+     -> Option<(String, TokenType)> {
         let mut new_token = String::from(c);
         match c {
-            '(' => Some(new_token),
-            ')' => Some(new_token),
+            '(' => Some((new_token, TokenType::OpenParen)),
+            ')' => Some((new_token, TokenType::CloseParen)),
             '0'..='9' | '.' => {
                 // takes as long as numbers are found
                 let new_chars = chars.peeking_take_while(|c| match c {
                     '0'..='9' | '.' => true,
+                    // TODO: stop only at whitespace
+                    // otherwise, show error
                     _ => false,
                 });
                 new_token.extend(new_chars);
-                Some(new_token)
+                Some((new_token, TokenType::Number))
             }
             ' ' => {
                 *col_num += 1;
@@ -82,8 +94,9 @@ fn tokenize(input: String) -> VecDeque<Token> {
                 if let Some('"') = chars.peek() {
                     new_token.push(chars.next().unwrap());
                 }
+                // TODO: show error if string not closed
 
-                Some(new_token)
+                Some((new_token, TokenType::String))
             }
             _ => {
                 // take everything until some other token is found
@@ -94,7 +107,7 @@ fn tokenize(input: String) -> VecDeque<Token> {
                 });
                 new_token.extend(new_chars);
 
-                Some(new_token)
+                Some((new_token, TokenType::Symbol))
             }
         }
     };
@@ -110,7 +123,8 @@ fn tokenize(input: String) -> VecDeque<Token> {
         // record starting col number
         let col_num_start = col_num;
 
-        if let Some(new_token) = char_processor(c, &mut chars, &mut line_num, &mut col_num) {
+        if let Some((new_token, type_)) = char_processor(c, &mut chars, &mut line_num, &mut col_num)
+        {
             // new col number is old + size of current token
             // when there isn't any token, char_processor handles
             // incrementing col_num
@@ -122,6 +136,7 @@ fn tokenize(input: String) -> VecDeque<Token> {
                 col_num_start,
                 col_num_end,
                 program_text: Rc::clone(&program_text),
+                type_,
             })
         }
     }
@@ -136,11 +151,11 @@ fn parse(tokens: &mut VecDeque<Token>) -> Result<Expr, SyntaxError> {
         None => return Err(SyntaxError::from("Unexpected EOF".to_string())),
     };
 
-    match token.text.as_str() {
-        "(" => {
+    match token.type_ {
+        TokenType::OpenParen => {
             // collect everything before ")"
             let mut ast: Vec<Expr> = Vec::new();
-            while !tokens.is_empty() && tokens[0].text != ")" {
+            while !tokens.is_empty() && tokens[0].type_ != TokenType::CloseParen {
                 // recursively parse each of them
                 let inner_ast = parse(tokens)?;
                 ast.push(inner_ast);
@@ -153,40 +168,29 @@ fn parse(tokens: &mut VecDeque<Token>) -> Result<Expr, SyntaxError> {
 
             return Ok(Expr::List(ast));
         }
-        ")" => return Err(SyntaxError::from("Unexpected ')'")),
-        _ => Ok(Expr::Atom(parse_atom(token.text)?)),
+        TokenType::CloseParen => return Err(SyntaxError::from("Unexpected ')'")),
+        _ => Ok(Expr::Atom(parse_atom(token)?)),
     }
 }
 
-fn parse_atom(token: String) -> Result<Atom, SyntaxError> {
-    let first_char = match token.chars().next() {
-        Some(char) => char,
-        None => return Err(SyntaxError::from("Expected something, found nothing?")),
-    };
+fn parse_atom(token: Token) -> Result<Atom, SyntaxError> {
+    match token.type_ {
+        TokenType::Number => {
+            let text = token.text;
 
-    match first_char {
-        '0'..='9' | '.' => {
-            if let Ok(num) = token.parse::<i64>() {
+            if let Ok(num) = text.parse::<i64>() {
                 return Ok(Atom::Number(Number::Int(num)));
             }
 
-            if let Ok(num) = token.parse::<f64>() {
+            if let Ok(num) = text.parse::<f64>() {
                 return Ok(Atom::Number(Number::Float(num)));
             }
 
-            Err(SyntaxError::from("Symbols cannot start with a number"))
-        }
-        '"' => {
-            let str_without_quotes = match token.strip_suffix("\"") {
-                Some(s) => s,
-                None => return Err(SyntaxError::from("String not closed")),
-            };
-
-            // we know it already start with " so belieb in unwrap
-            let str_without_quotes = str_without_quotes.strip_prefix("\"").unwrap();
-
-            Ok(Atom::String(str_without_quotes.to_string()))
-        }
-        _ => Ok(Atom::Symbol(token)),
+            Err(SyntaxError::from("Could not parse number"))
+        },
+        // remove quotes from string token and store
+        TokenType::String => Ok(Atom::String(token.text[1..token.text.len()-1].to_string())),
+        TokenType::Symbol => Ok(Atom::Symbol(token.text)),
+        TokenType::OpenParen | TokenType::CloseParen => Err(SyntaxError::from("Cannot extract atom from these lol"))
     }
 }

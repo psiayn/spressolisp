@@ -1,4 +1,4 @@
-use spressolisp::{ast::{Number, Expr, Atom}, env::Env, eval::extract_num, evaluate_expression};
+use spressolisp::{ast::{Expr, Atom}, env::Env, evaluate_expression};
 
 #[test]
 fn test_string_nospace() {

@@ -11,7 +11,8 @@ lisp in rust
 - [x] strings
 - [ ] revamp tokenizer and parser
     - [x] strings with spaces in them
-    - [ ] track line and col num for each token
+    - [x] track line and col num for each token
+    - [ ] keep track of token(s) for each expr
 - [x] loops
 - [ ] lists
 - [ ] cleanup code
