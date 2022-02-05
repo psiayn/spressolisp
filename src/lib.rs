@@ -175,13 +175,13 @@ fn tokenize(input: String) -> VecDeque<Token> {
             // new col number is old + size of current token
             // when there isn't any token, char_processor handles
             // incrementing col_num
-            let col_num_end = col_num + new_token.len();
+            col_num += new_token.len();
 
             tokens.push_back(Token {
                 text: new_token,
                 line_num,
                 col_num_start,
-                col_num_end,
+                col_num_end: col_num,
                 program_lines: Rc::clone(&program_lines),
                 type_,
             })
