@@ -1,9 +1,30 @@
 use std::fmt;
+use std::ops::Deref;
 
 use crate::env::Env;
 use crate::errors::{NumericError, SpressoError};
+use crate::{display_and_mark, Token};
 
 pub type FuncType = fn(Vec<Expr>, &mut Env) -> Result<Expr, SpressoError>;
+
+pub struct ExprBox {
+    value: Expr,
+    tokens: Vec<Token>,
+}
+
+impl Deref for ExprBox {
+    type Target = Expr;
+
+    fn deref(&self) -> &Self::Target {
+        &self.value
+    }
+}
+
+impl ExprBox {
+    fn display_and_mark(&self) {
+        display_and_mark(&self.tokens)
+    }
+}
 
 #[derive(Clone)]
 pub enum Expr {
@@ -131,7 +152,6 @@ impl std::ops::Div<Number> for Number {
     }
 }
 
-
 #[derive(Clone)]
 pub struct Lambda {
     pub params: Vec<String>,
@@ -162,7 +182,8 @@ fn print_expr(ast: &Expr, level: usize, f: &mut fmt::Formatter<'_>) -> fmt::Resu
     match ast {
         Expr::List(list) => {
             write!(f, "[ ").unwrap();
-            let hmm = list.into_iter()
+            let hmm = list
+                .into_iter()
                 .map(|token| print_expr(token, level + 1, f))
                 .collect::<fmt::Result>();
             write!(f, "] ").unwrap();

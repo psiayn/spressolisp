@@ -3,7 +3,8 @@ pub mod env;
 pub mod errors;
 pub mod eval;
 
-use std::collections::VecDeque;
+use std::cmp;
+use std::collections::{BTreeMap, VecDeque};
 use std::iter::Peekable;
 use std::rc::Rc;
 use std::str::Chars;
@@ -27,16 +28,54 @@ pub fn evaluate_expression(input: String, env: &mut Env) -> Result<Expr, Spresso
     }
 }
 
+#[derive(Clone)]
 struct Token {
     text: String,
+    // TODO: some tokens like string could go across multiple lines
+    // store both line_num_start and line_num_end
     line_num: usize,
     col_num_start: usize,
     col_num_end: usize,
-    program_text: Rc<String>,
+    program_lines: Rc<Vec<String>>,
     type_: TokenType,
 }
 
-#[derive(PartialEq)]
+fn display_and_mark(tokens: &Vec<Token>) {
+    println!("");
+
+    let mut line_map = BTreeMap::<usize, (usize, usize)>::new();
+    let program_lines = Rc::clone(&tokens[0].program_lines);
+
+    tokens.iter().for_each(|token| {
+        if line_map.contains_key(&token.line_num) {
+            let entry = line_map.entry(token.line_num);
+            entry.and_modify(|val| {
+                val.0 = cmp::min(val.0, token.col_num_start);
+                val.1 = cmp::max(val.1, token.col_num_end);
+            });
+        } else {
+            line_map.insert(token.line_num, (token.col_num_start, token.col_num_end));
+        }
+    });
+
+    for (line_num, (col_start, col_end)) in line_map.iter() {
+        println!(
+            "{0:<width$}| {1}",
+            line_num,
+            program_lines[*line_num - 1],
+            width = 4
+        );
+        println!(
+            "{space}{marker}",
+            marker = "-".repeat(col_end - col_start),
+            space = " ".repeat(col_start + 4 + 2 - 1)
+        );
+    }
+
+    println!("");
+}
+
+#[derive(PartialEq, Clone)]
 enum TokenType {
     OpenParen,
     CloseParen,
@@ -118,6 +157,14 @@ fn tokenize(input: String) -> VecDeque<Token> {
     // we will be processing each char one by one using this single iterator
     let mut chars = program_text.chars().peekable();
 
+    // we store individual lines of the program because we need to print lines during error
+    let program_lines = Rc::new(
+        Rc::clone(&program_text)
+            .lines()
+            .map(|s| s.to_string())
+            .collect(),
+    );
+
     // loop until chars are present
     while let Some(c) = chars.next() {
         // record starting col number
@@ -135,7 +182,7 @@ fn tokenize(input: String) -> VecDeque<Token> {
                 line_num,
                 col_num_start,
                 col_num_end,
-                program_text: Rc::clone(&program_text),
+                program_lines: Rc::clone(&program_lines),
                 type_,
             })
         }
@@ -163,6 +210,7 @@ fn parse(tokens: &mut VecDeque<Token>) -> Result<Expr, SyntaxError> {
 
             // there should be a closing ")" after parsing everything inside
             if let None = tokens.pop_front() {
+                display_and_mark(&vec![token]);
                 return Err(SyntaxError::from("'(' not closed"));
             }
 
@@ -187,10 +235,14 @@ fn parse_atom(token: Token) -> Result<Atom, SyntaxError> {
             }
 
             Err(SyntaxError::from("Could not parse number"))
-        },
+        }
         // remove quotes from string token and store
-        TokenType::String => Ok(Atom::String(token.text[1..token.text.len()-1].to_string())),
+        TokenType::String => Ok(Atom::String(
+            token.text[1..token.text.len() - 1].to_string(),
+        )),
         TokenType::Symbol => Ok(Atom::Symbol(token.text)),
-        TokenType::OpenParen | TokenType::CloseParen => Err(SyntaxError::from("Cannot extract atom from these lol"))
+        TokenType::OpenParen | TokenType::CloseParen => {
+            Err(SyntaxError::from("Cannot extract atom from these lol"))
+        }
     }
 }
