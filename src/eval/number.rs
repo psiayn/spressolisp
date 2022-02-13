@@ -43,7 +43,7 @@ pub fn extract_num(expr: Expr, env: &mut Env) -> Result<Number, SpressoError> {
             let res = execute(&mut exprs, env)?;
             match res {
                 Expr::Atom(Atom::Number(num)) => Ok(num),
-                _ => Err(SpressoError::Numeric(NumericError::from(format!(
+                _ => Err(SpressoError::from(NumericError::from(format!(
                     "trying to perform arithmetic on non-number: {}",
                     res
                 )))),

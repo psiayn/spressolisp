@@ -5,37 +5,72 @@ use colored::Colorize;
 use crate::{display_and_mark, Token};
 
 #[derive(Clone)]
-pub enum SpressoError {
+pub struct SpressoError {
+    detail: SpressoErrorType,
+    tokens: Option<Vec<Token>>,
+}
+
+#[derive(Clone)]
+pub enum SpressoErrorType {
     Runtime(RuntimeError),
     Syntax(SyntaxError),
     Numeric(NumericError),
 }
 
+impl SpressoError {
+    pub fn new(detail: SpressoErrorType) -> Self {
+        SpressoError {
+            detail,
+            tokens: None,
+        }
+    }
+
+    pub fn with_tokens(mut self, tokens: Vec<Token>) -> Self {
+        self.tokens = Some(tokens);
+        self
+    }
+
+    pub fn with_token(mut self, token: Token) -> Self {
+        match &mut self.tokens {
+            Some(tokens) => tokens.push(token),
+            None => self.tokens = Some(vec![token]),
+        }
+        self
+    }
+}
+
 impl fmt::Display for SpressoError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            SpressoError::Runtime(err) => write!(f, "{}", err),
-            SpressoError::Syntax(err) => write!(f, "{}", err),
-            SpressoError::Numeric(err) => write!(f, "{}", err),
+        let (err_str, err_name) = match &self.detail {
+            SpressoErrorType::Runtime(err) => (err.err.as_str(), "Runtime Error".red()),
+            SpressoErrorType::Syntax(err) => (err.err.as_str(), "Syntax Error".red()),
+            SpressoErrorType::Numeric(err) => (err.err.as_str(), "Numeric Error".red()),
+        };
+        write!(f, "{}: {}\n", err_name, err_str)?;
+
+        if let Some(tokens) = &self.tokens {
+            display_and_mark(f, tokens)?;
         }
+
+        Ok(())
     }
 }
 
 impl From<RuntimeError> for SpressoError {
     fn from(err: RuntimeError) -> Self {
-        SpressoError::Runtime(err)
+        SpressoError::new(SpressoErrorType::Runtime(err))
     }
 }
 
 impl From<SyntaxError> for SpressoError {
     fn from(err: SyntaxError) -> Self {
-        SpressoError::Syntax(err)
+        SpressoError::new(SpressoErrorType::Syntax(err))
     }
 }
 
 impl From<NumericError> for SpressoError {
     fn from(err: NumericError) -> Self {
-        SpressoError::Numeric(err)
+        SpressoError::new(SpressoErrorType::Numeric(err))
     }
 }
 
@@ -67,43 +102,19 @@ impl fmt::Display for RuntimeError {
 #[derive(Clone)]
 pub struct SyntaxError {
     pub err: String,
-    tokens: Option<Vec<Token>>,
 }
 
 impl From<&str> for SyntaxError {
     fn from(message: &str) -> Self {
         SyntaxError {
             err: message.to_string(),
-            tokens: None,
         }
     }
 }
 
 impl From<String> for SyntaxError {
     fn from(message: String) -> Self {
-        SyntaxError {
-            err: message,
-            tokens: None,
-        }
-    }
-}
-
-impl SyntaxError {
-    pub fn with_tokens(mut self, tokens: Vec<Token>) -> Self {
-        self.tokens = Some(tokens);
-        self
-    }
-}
-
-impl fmt::Display for SyntaxError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}: {}\n", "Syntax Error".red(), self.err)?;
-
-        if let Some(tokens) = &self.tokens {
-            display_and_mark(f, tokens)?;
-        }
-
-        Ok(())
+        SyntaxError { err: message }
     }
 }
 

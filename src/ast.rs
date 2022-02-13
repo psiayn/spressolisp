@@ -128,9 +128,9 @@ impl std::ops::Div<Number> for Number {
         match rhs {
             Number::Float(num) => {
                 if num == 0.0 || num == -0.0 {
-                    return Err(SpressoError::Numeric(NumericError {
+                    return Err(NumericError {
                         err: "Division By Zero".to_string(),
-                    }));
+                    }.into());
                 }
                 match self {
                     Number::Float(lhs) => Ok(Number::Float(lhs / num)),
@@ -139,9 +139,9 @@ impl std::ops::Div<Number> for Number {
             }
             Number::Int(num) => {
                 if num == 0 || num == -0 {
-                    return Err(SpressoError::Numeric(NumericError {
+                    return Err(NumericError {
                         err: "Division By Zero".to_string(),
-                    }));
+                    }.into());
                 }
                 match self {
                     Number::Float(lhs) => Ok(Number::Float(lhs / num as f64)),

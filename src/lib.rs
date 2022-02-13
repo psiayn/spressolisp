@@ -23,7 +23,7 @@ pub fn evaluate_expression(input: String, env: &mut Env) -> Result<Expr, Spresso
     let ast = parse(&mut tokenized_input)?;
     match ast {
         Expr::List(mut exprs) => execute(&mut exprs, env),
-        _ => Err(SpressoError::Runtime(RuntimeError::from(format!(
+        _ => Err(SpressoError::from(RuntimeError::from(format!(
             "Hmm I can't execute something that is not a list: {}",
             ast
         )))),
@@ -192,11 +192,15 @@ fn tokenize(input: String) -> VecDeque<Token> {
     tokens
 }
 
-fn parse(tokens: &mut VecDeque<Token>) -> Result<Expr, SyntaxError> {
+fn parse(tokens: &mut VecDeque<Token>) -> Result<Expr, SpressoError> {
     let token = match tokens.pop_front() {
         Some(token) => token,
         // no tokens (vec was empty)
-        None => return Err(SyntaxError::from("Unexpected EOF".to_string())),
+        None => {
+            return Err(SyntaxError::from(
+                "Unexpected EOF".to_string(),
+            ).into())
+        }
     };
 
     match token.type_ {
@@ -211,19 +215,22 @@ fn parse(tokens: &mut VecDeque<Token>) -> Result<Expr, SyntaxError> {
 
             // there should be a closing ")" after parsing everything inside
             if let None = tokens.pop_front() {
-                return Err(SyntaxError::from("'(' not closed").with_tokens(vec![token]));
+                return Err(SpressoError::from(SyntaxError::from("'(' not closed"))
+                    .with_tokens(vec![token]));
             }
 
             return Ok(Expr::List(ast));
         }
         TokenType::CloseParen => {
-            return Err(SyntaxError::from("Unexpected ')'").with_tokens(vec![token]))
+            return Err(
+                SpressoError::from(SyntaxError::from("Unexpected ')'")).with_tokens(vec![token])
+            )
         }
         _ => Ok(Expr::Atom(parse_atom(token)?)),
     }
 }
 
-fn parse_atom(token: Token) -> Result<Atom, SyntaxError> {
+fn parse_atom(token: Token) -> Result<Atom, SpressoError> {
     match token.type_ {
         TokenType::Number => {
             let text = token.text.clone();
@@ -236,15 +243,19 @@ fn parse_atom(token: Token) -> Result<Atom, SyntaxError> {
                 return Ok(Atom::Number(Number::Float(num)));
             }
 
-            Err(SyntaxError::from("Could not parse number").with_tokens(vec![token]))
+            Err(
+                SpressoError::from(SyntaxError::from("Could not parse number"))
+                    .with_tokens(vec![token]),
+            )
         }
         // remove quotes from string token and store
         TokenType::String => Ok(Atom::String(
             token.text[1..token.text.len() - 1].to_string(),
         )),
         TokenType::Symbol => Ok(Atom::Symbol(token.text)),
-        TokenType::OpenParen | TokenType::CloseParen => {
-            Err(SyntaxError::from("Cannot extract atom from these lol").with_tokens(vec![token]))
-        }
+        TokenType::OpenParen | TokenType::CloseParen => Err(SpressoError::from(SyntaxError::from(
+            "Cannot extract atom from these lol",
+        ))
+        .with_tokens(vec![token])),
     }
 }
