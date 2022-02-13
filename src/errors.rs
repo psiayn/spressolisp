@@ -2,7 +2,7 @@ use std::fmt;
 
 use colored::Colorize;
 
-use crate::{display_and_mark, Token};
+use crate::{display_and_mark, Token, TokenHoarder};
 
 #[derive(Clone)]
 pub struct SpressoError {
@@ -24,16 +24,22 @@ impl SpressoError {
             tokens: None,
         }
     }
+}
 
-    pub fn with_tokens(mut self, tokens: Vec<Token>) -> Self {
-        self.tokens = Some(tokens);
+impl TokenHoarder for SpressoError {
+    fn with_tokens(mut self, tokens: Option<Vec<Token>>) -> Self {
+        if let Some(tokens) = tokens {
+            self.tokens = Some(tokens);
+        }
         self
     }
 
-    pub fn with_token(mut self, token: Token) -> Self {
-        match &mut self.tokens {
-            Some(tokens) => tokens.push(token),
-            None => self.tokens = Some(vec![token]),
+    fn with_token(mut self, token: Option<Token>) -> Self {
+        if let Some(token) = token {
+            match &mut self.tokens {
+                Some(tokens) => tokens.push(token),
+                None => self.tokens = Some(vec![token]),
+            }
         }
         self
     }

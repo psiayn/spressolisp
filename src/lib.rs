@@ -196,11 +196,7 @@ fn parse(tokens: &mut VecDeque<Token>) -> Result<Expr, SpressoError> {
     let token = match tokens.pop_front() {
         Some(token) => token,
         // no tokens (vec was empty)
-        None => {
-            return Err(SyntaxError::from(
-                "Unexpected EOF".to_string(),
-            ).into())
-        }
+        None => return Err(SyntaxError::from("Unexpected EOF".to_string()).into()),
     };
 
     match token.type_ {
@@ -215,15 +211,16 @@ fn parse(tokens: &mut VecDeque<Token>) -> Result<Expr, SpressoError> {
 
             // there should be a closing ")" after parsing everything inside
             if let None = tokens.pop_front() {
-                return Err(SpressoError::from(SyntaxError::from("'(' not closed"))
-                    .with_tokens(vec![token]));
+                return Err(
+                    SpressoError::from(SyntaxError::from("'(' not closed")).with_token(Some(token))
+                );
             }
 
             return Ok(Expr::List(ast));
         }
         TokenType::CloseParen => {
             return Err(
-                SpressoError::from(SyntaxError::from("Unexpected ')'")).with_tokens(vec![token])
+                SpressoError::from(SyntaxError::from("Unexpected ')'")).with_token(Some(token))
             )
         }
         _ => Ok(Expr::Atom(parse_atom(token)?)),
@@ -245,7 +242,7 @@ fn parse_atom(token: Token) -> Result<Atom, SpressoError> {
 
             Err(
                 SpressoError::from(SyntaxError::from("Could not parse number"))
-                    .with_tokens(vec![token]),
+                    .with_token(Some(token)),
             )
         }
         // remove quotes from string token and store
@@ -256,6 +253,27 @@ fn parse_atom(token: Token) -> Result<Atom, SpressoError> {
         TokenType::OpenParen | TokenType::CloseParen => Err(SpressoError::from(SyntaxError::from(
             "Cannot extract atom from these lol",
         ))
-        .with_tokens(vec![token])),
+        .with_token(Some(token))),
     }
+}
+
+trait TokenHoarder {
+    fn with_token(self, token: Option<Token>) -> Self;
+
+    fn with_tokens(mut self, tokens: Option<Vec<Token>>) -> Self
+    where
+        Self: Sized,
+    {
+        if let Some(tokens) = tokens {
+            for token in tokens {
+                self = self.with_token(Some(token));
+            }
+        }
+
+        self
+    }
+}
+
+trait TokenGiver {
+    fn get_tokens(&self) -> Option<Vec<Token>>;
 }

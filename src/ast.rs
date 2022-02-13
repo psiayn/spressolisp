@@ -1,30 +1,9 @@
 use std::fmt;
-use std::ops::Deref;
 
 use crate::env::Env;
 use crate::errors::{NumericError, SpressoError};
-use crate::{display_and_mark, Token};
 
 pub type FuncType = fn(Vec<Expr>, &mut Env) -> Result<Expr, SpressoError>;
-
-pub struct ExprBox {
-    value: Expr,
-    tokens: Vec<Token>,
-}
-
-impl Deref for ExprBox {
-    type Target = Expr;
-
-    fn deref(&self) -> &Self::Target {
-        &self.value
-    }
-}
-
-impl ExprBox {
-    fn display_and_mark(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        display_and_mark(f, &self.tokens)
-    }
-}
 
 #[derive(Clone)]
 pub enum Expr {
