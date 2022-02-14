@@ -13,16 +13,19 @@ pub use number::*;
 pub use relational::*;
 
 use crate::{
-    ast::{Atom, Expr},
+    ast::{Atom, AtomKind, Expr},
     env::Env,
-    errors::{SpressoError, RuntimeError},
+    errors::{RuntimeError, SpressoError},
 };
 
 pub fn execute(exprs: &mut Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
     let first_arg = exprs[0].clone();
     match first_arg {
         Expr::Func(func) => func(exprs[1..].to_vec(), env),
-        Expr::Atom(Atom::Symbol(symbol)) => {
+        Expr::Atom(Atom {
+            kind: AtomKind::Symbol(symbol),
+            ..
+        }) => {
             let sym = env.get_symbol(symbol.as_str())?;
 
             if exprs.len() > 1 {
@@ -40,7 +43,10 @@ pub fn execute(exprs: &mut Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoErro
 pub fn execute_single(expr: Expr, env: &mut Env) -> Result<Expr, SpressoError> {
     match expr {
         Expr::Func(func) => func(vec![], env),
-        Expr::Atom(Atom::Symbol(symbol)) => Ok(env.get_symbol(symbol.as_str())?),
+        Expr::Atom(Atom {
+            kind: AtomKind::Symbol(symbol),
+            ..
+        }) => Ok(env.get_symbol(symbol.as_str())?),
         Expr::List(mut exprs) => execute(&mut exprs, env),
         Expr::Lambda(lambda) => execute_lambda(lambda, vec![], env),
         Expr::Atom(_) => Ok(expr),

@@ -1,5 +1,5 @@
 use crate::{
-    ast::{Atom, Expr},
+    ast::{Atom, Expr, AtomKind},
     env::Env,
     errors::{RuntimeError, SpressoError},
     eval::execute_single,
@@ -15,7 +15,7 @@ pub fn if_cond(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
 
     let cond = execute_single(cond, env)?;
 
-    if let Expr::Atom(Atom::Bool(boolean)) = cond {
+    if let Expr::Atom(Atom{kind: AtomKind::Bool(boolean), ..}) = cond {
         if boolean {
             // execute true
             let true_cond = args.remove(0);
@@ -26,7 +26,8 @@ pub fn if_cond(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
                 let false_cond = args.pop().unwrap();
                 execute_single(false_cond, env)
             } else {
-                Ok(Expr::Atom(Atom::Bool(false)))
+                // TODO: maybe return a unit type () here
+                Ok(Expr::Atom(Atom::new_bool(false)))
             }
         }
     } else {

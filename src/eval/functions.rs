@@ -1,8 +1,9 @@
 use crate::{
-    ast::{Atom, Expr, Lambda},
+    ast::{Atom, AtomKind, Expr, Lambda},
     env::Env,
     errors::{RuntimeError, SpressoError},
     eval::execute_single,
+    TokenGiver, TokenHoarder,
 };
 
 pub fn lambda(args: Vec<Expr>, _env: &mut Env) -> Result<Expr, SpressoError> {
@@ -16,15 +17,19 @@ pub fn lambda(args: Vec<Expr>, _env: &mut Env) -> Result<Expr, SpressoError> {
     let body = args[1..].to_vec();
 
     match fn_params {
-        Expr::Atom(Atom::Symbol(fn_param)) => Ok(Expr::Lambda(Lambda {
-            params: vec![fn_param],
-            body,
-        })),
+        Expr::Atom(Atom {
+            kind: AtomKind::Symbol(fn_param),
+            ..
+        }) => Ok(Expr::Lambda(lambda_with_tokens(vec![fn_param], body, args))),
         Expr::List(fn_params) => {
             let params: Result<Vec<String>, SpressoError> = fn_params
                 .into_iter()
                 .map(|param| {
-                    if let Expr::Atom(Atom::Symbol(param)) = param {
+                    if let Expr::Atom(Atom {
+                        kind: AtomKind::Symbol(param),
+                        ..
+                    }) = param
+                    {
                         Ok(param)
                     } else {
                         Err(SpressoError::from(RuntimeError::from(
@@ -34,10 +39,7 @@ pub fn lambda(args: Vec<Expr>, _env: &mut Env) -> Result<Expr, SpressoError> {
                 })
                 .collect();
 
-            Ok(Expr::Lambda(Lambda {
-                params: params?,
-                body,
-            }))
+            Ok(Expr::Lambda(lambda_with_tokens(params?, body, args)))
         }
         _ => Err(SpressoError::from(RuntimeError::from(
             "lambda parameters must be a symbol",
@@ -76,7 +78,15 @@ pub fn execute_lambda(
                 .take_while(Result::is_ok)
                 .last()
                 // TODO: replace this with empty value (unit?)
-                .unwrap_or(Ok(Expr::Atom(Atom::Bool(false))))
+                .unwrap_or(Ok(Expr::Atom(Atom::new_bool(false))))
         })
     }
+}
+
+fn lambda_with_tokens(fn_params: Vec<String>, body: Vec<Expr>, exprs: Vec<Expr>) -> Lambda {
+    let mut new_lambda = Lambda::new(fn_params, body);
+    for expr in exprs {
+        new_lambda = new_lambda.with_tokens(expr.get_tokens());
+    }
+    new_lambda
 }
