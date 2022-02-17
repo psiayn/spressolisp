@@ -2,7 +2,6 @@ use std::fmt;
 
 use crate::env::Env;
 use crate::errors::{NumericError, SpressoError};
-use crate::{Token, TokenGiver, TokenHoarder};
 
 pub type FuncType = fn(Vec<Expr>, &mut Env) -> Result<Expr, SpressoError>;
 
@@ -20,86 +19,21 @@ impl fmt::Display for Expr {
     }
 }
 
-impl TokenGiver for Expr {
-    fn get_tokens(&self) -> Option<Vec<Token>> {
-        match self {
-            Expr::Atom(atom) => atom.get_tokens(),
-            Expr::List(exprs) => {
-                let mut tokens = Vec::new();
-                for expr in exprs {
-                    if let Some(new_tokens) = expr.get_tokens() {
-                        tokens.extend(new_tokens)
-                    }
-                }
-                Some(tokens)
-            }
-            Expr::Func(_) => None,
-            Expr::Lambda(lambda) => lambda.get_tokens(),
-        }
-    }
-}
-
-#[derive(Clone)]
-pub struct Atom {
-    pub kind: AtomKind,
-    tokens: Option<Vec<Token>>,
-}
-
-#[derive(Clone)]
-pub enum AtomKind {
+#[derive(Debug, Clone)]
+pub enum Atom {
     Symbol(String),
     Number(Number),
     Bool(bool),
     String(String),
 }
 
-impl Atom {
-    pub fn new(kind: AtomKind) -> Self {
-        Self { kind, tokens: None }
-    }
-
-    pub fn new_symbol(symbol: String) -> Self {
-        Self::new(AtomKind::Symbol(symbol))
-    }
-
-    pub fn new_string(string: String) -> Self {
-        Self::new(AtomKind::String(string))
-    }
-
-    pub fn new_number(number: Number) -> Self {
-        Self::new(AtomKind::Number(number))
-    }
-
-    pub fn new_bool(boolean: bool) -> Self {
-        Self::new(AtomKind::Bool(boolean))
-    }
-}
-
-impl TokenHoarder for Atom {
-    fn with_token(mut self, token: Option<Token>) -> Self {
-        if let Some(token) = token {
-            match &mut self.tokens {
-                Some(tokens) => tokens.push(token),
-                None => self.tokens = Some(vec![token]),
-            }
-        }
-        self
-    }
-}
-
-impl TokenGiver for Atom {
-    fn get_tokens(&self) -> Option<Vec<Token>> {
-        self.tokens.clone()
-    }
-}
-
 impl fmt::Display for Atom {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match &self.kind {
-            AtomKind::Symbol(string) => write!(f, "{}", string),
-            AtomKind::Number(num) => write!(f, "{}", num),
-            AtomKind::Bool(boolean) => write!(f, "{}", boolean),
-            AtomKind::String(string) => write!(f, "\"{}\"", string),
+        match self {
+            Atom::Symbol(string) => write!(f, "{}", string),
+            Atom::Number(num) => write!(f, "{}", num),
+            Atom::Bool(boolean) => write!(f, "{}", boolean),
+            Atom::String(string) => write!(f, "\"{}\"", string),
         }
     }
 }
@@ -108,18 +42,6 @@ impl fmt::Display for Atom {
 pub enum Number {
     Int(i64),
     Float(f64),
-}
-
-impl From<i64> for Number {
-    fn from(num: i64) -> Self {
-        Self::Int(num)
-    }
-}
-
-impl From<f64> for Number {
-    fn from(num: f64) -> Self {
-        Self::Float(num)
-    }
 }
 
 impl fmt::Display for Number {
@@ -187,8 +109,7 @@ impl std::ops::Div<Number> for Number {
                 if num == 0.0 || num == -0.0 {
                     return Err(NumericError {
                         err: "Division By Zero".to_string(),
-                    }
-                    .into());
+                    }.into());
                 }
                 match self {
                     Number::Float(lhs) => Ok(Number::Float(lhs / num)),
@@ -199,8 +120,7 @@ impl std::ops::Div<Number> for Number {
                 if num == 0 || num == -0 {
                     return Err(NumericError {
                         err: "Division By Zero".to_string(),
-                    }
-                    .into());
+                    }.into());
                 }
                 match self {
                     Number::Float(lhs) => Ok(Number::Float(lhs / num as f64)),
@@ -215,37 +135,11 @@ impl std::ops::Div<Number> for Number {
 pub struct Lambda {
     pub params: Vec<String>,
     pub body: Vec<Expr>,
-    tokens: Vec<Token>,
 }
 
 impl fmt::Display for Lambda {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "λ: [{}] -> ...", self.params.join(", "))
-    }
-}
-
-impl Lambda {
-    pub fn new(params: Vec<String>, body: Vec<Expr>) -> Self {
-        Self {
-            params,
-            body,
-            tokens: Vec::new(),
-        }
-    }
-}
-
-impl TokenHoarder for Lambda {
-    fn with_token(mut self, token: Option<Token>) -> Self {
-        if let Some(token) = token {
-            self.tokens.push(token)
-        }
-        self
-    }
-}
-
-impl TokenGiver for Lambda {
-    fn get_tokens(&self) -> Option<Vec<Token>> {
-        Some(self.tokens.clone())
     }
 }
 

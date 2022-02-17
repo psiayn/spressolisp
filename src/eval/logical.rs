@@ -1,5 +1,5 @@
 use crate::{
-    ast::{Atom, AtomKind, Expr},
+    ast::{Atom, Expr},
     env::Env,
     errors::{RuntimeError, SpressoError},
     eval::execute_single,
@@ -15,14 +15,8 @@ pub fn and(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
     let lhs = execute_single(args[0].clone(), env)?;
     let rhs = execute_single(args[1].clone(), env)?;
     match lhs {
-        Expr::Atom(Atom {
-            kind: AtomKind::Bool(lhs),
-            ..
-        }) => match rhs {
-            Expr::Atom(Atom {
-                kind: AtomKind::Bool(rhs),
-                ..
-            }) => return Ok(Expr::Atom(Atom::new_bool(lhs && rhs))),
+        Expr::Atom(Atom::Bool(lhs)) => match rhs {
+            Expr::Atom(Atom::Bool(rhs)) => return Ok(Expr::Atom(Atom::Bool(lhs && rhs))),
             _ => {
                 return Err(SpressoError::from(RuntimeError::from(
                     "RHS needs to be bool",
@@ -47,14 +41,8 @@ pub fn or(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
     let lhs = execute_single(args[0].clone(), env)?;
     let rhs = execute_single(args[1].clone(), env)?;
     match lhs {
-        Expr::Atom(Atom {
-            kind: AtomKind::Bool(lhs),
-            ..
-        }) => match rhs {
-            Expr::Atom(Atom {
-                kind: AtomKind::Bool(rhs),
-                ..
-            }) => return Ok(Expr::Atom(Atom::new_bool(lhs || rhs))),
+        Expr::Atom(Atom::Bool(lhs)) => match rhs {
+            Expr::Atom(Atom::Bool(rhs)) => return Ok(Expr::Atom(Atom::Bool(lhs || rhs))),
             _ => {
                 return Err(SpressoError::from(RuntimeError::from(
                     "RHS needs to be bool",
@@ -78,10 +66,7 @@ pub fn not(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
 
     let expr = execute_single(args[0].clone(), env)?;
     match expr {
-        Expr::Atom(Atom {
-            kind: AtomKind::Bool(arg),
-            ..
-        }) => return Ok(Expr::Atom(Atom::new_bool(!arg))),
+        Expr::Atom(Atom::Bool(arg)) => return Ok(Expr::Atom(Atom::Bool(!arg))),
         _ => {
             return Err(SpressoError::from(RuntimeError::from(
                 "arg needs to be bool",

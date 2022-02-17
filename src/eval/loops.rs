@@ -1,5 +1,5 @@
 use crate::{
-    ast::{Atom, AtomKind, Expr},
+    ast::{Atom, Expr},
     env::Env,
     errors::{RuntimeError, SpressoError},
     eval::execute_single,
@@ -14,20 +14,12 @@ pub fn while_loop(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> 
     let condition = execute_single(args[0].clone(), env)?;
     let body = args[1..].to_vec();
 
-    if let Expr::Atom(Atom {
-        kind: AtomKind::Bool(mut cond),
-        ..
-    }) = condition
-    {
+    if let Expr::Atom(Atom::Bool(mut cond)) = condition {
         while cond {
             for expr in body.clone() {
                 execute_single(expr, env)?;
             }
-            if let Expr::Atom(Atom {
-                kind: AtomKind::Bool(boolean),
-                ..
-            }) = execute_single(args[0].clone(), env)?
-            {
+            if let Expr::Atom(Atom::Bool(boolean)) = execute_single(args[0].clone(), env)? {
                 cond = boolean;
             } else {
                 return Err(SpressoError::from(RuntimeError::from(
@@ -35,7 +27,7 @@ pub fn while_loop(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> 
                 )));
             }
         }
-        return Ok(Expr::Atom(Atom::new_bool(true)));
+        return Ok(Expr::Atom(Atom::Bool(true)));
     } else {
         Err(SpressoError::from(RuntimeError::from(
             "Trying to use a non bool for condition",

@@ -13,7 +13,7 @@ use std::str::Chars;
 use colored::Colorize;
 use itertools::Itertools;
 
-use crate::ast::{Atom, Expr};
+use crate::ast::{Atom, Expr, Number};
 use crate::env::Env;
 use crate::errors::{RuntimeError, SpressoError, SyntaxError};
 use crate::eval::execute;
@@ -233,11 +233,11 @@ fn parse_atom(token: Token) -> Result<Atom, SpressoError> {
             let text = token.text.clone();
 
             if let Ok(num) = text.parse::<i64>() {
-                return Ok(Atom::new_number(num.into()));
+                return Ok(Atom::Number(Number::Int(num)));
             }
 
             if let Ok(num) = text.parse::<f64>() {
-                return Ok(Atom::new_number(num.into()));
+                return Ok(Atom::Number(Number::Float(num)));
             }
 
             Err(
@@ -246,10 +246,10 @@ fn parse_atom(token: Token) -> Result<Atom, SpressoError> {
             )
         }
         // remove quotes from string token and store
-        TokenType::String => Ok(Atom::new_string(
+        TokenType::String => Ok(Atom::String(
             token.text[1..token.text.len() - 1].to_string(),
         )),
-        TokenType::Symbol => Ok(Atom::new_symbol(token.text)),
+        TokenType::Symbol => Ok(Atom::Symbol(token.text)),
         TokenType::OpenParen | TokenType::CloseParen => Err(SpressoError::from(SyntaxError::from(
             "Cannot extract atom from these lol",
         ))

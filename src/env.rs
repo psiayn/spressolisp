@@ -25,8 +25,8 @@ impl Env {
         // keywords
         env.insert("define".to_string(), Expr::Func(eval::define));
         env.insert("print".to_string(), Expr::Func(eval::print));
-        env.insert("true".to_string(), Expr::Atom(Atom::new_bool(true)));
-        env.insert("false".to_string(), Expr::Atom(Atom::new_bool(false)));
+        env.insert("true".to_string(), Expr::Atom(Atom::Bool(true)));
+        env.insert("false".to_string(), Expr::Atom(Atom::Bool(false)));
         env.insert("if".to_string(), Expr::Func(eval::if_cond));
         env.insert("lambda".to_string(), Expr::Func(eval::lambda));
         env.insert("loop".to_string(), Expr::Func(eval::while_loop));
@@ -46,7 +46,7 @@ impl Env {
 
         // support for lists?
         env.insert("'".to_string(), Expr::Func(eval::lists));
-
+        
         Env {
             map: env,
             scopes: Vec::new(),

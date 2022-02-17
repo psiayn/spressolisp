@@ -19,7 +19,7 @@ pub fn lt(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
     let first = extract_num(first, env)?;
     let second = extract_num(second, env)?;
     // return result
-    Ok(Expr::Atom(Atom::new_bool(first < second)))
+    Ok(Expr::Atom(Atom::Bool(first < second)))
 }
 
 pub fn lteq(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
@@ -36,7 +36,7 @@ pub fn lteq(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
     let first = extract_num(first, env)?;
     let second = extract_num(second, env)?;
     // return result
-    Ok(Expr::Atom(Atom::new_bool(first <= second)))
+    Ok(Expr::Atom(Atom::Bool(first <= second)))
 }
 
 pub fn gt(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
@@ -53,7 +53,7 @@ pub fn gt(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
     let first = extract_num(first, env)?;
     let second = extract_num(second, env)?;
     // return result
-    Ok(Expr::Atom(Atom::new_bool(first > second)))
+    Ok(Expr::Atom(Atom::Bool(first > second)))
 }
 
 pub fn gteq(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
@@ -70,7 +70,7 @@ pub fn gteq(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
     let first = extract_num(first, env)?;
     let second = extract_num(second, env)?;
     // return result
-    Ok(Expr::Atom(Atom::new_bool(first >= second)))
+    Ok(Expr::Atom(Atom::Bool(first >= second)))
 }
 
 pub fn eq(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
@@ -87,7 +87,7 @@ pub fn eq(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
     let first = extract_num(first, env)?;
     let second = extract_num(second, env)?;
     // return result
-    Ok(Expr::Atom(Atom::new_bool(first == second)))
+    Ok(Expr::Atom(Atom::Bool(first == second)))
 }
 
 pub fn neq(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
@@ -104,5 +104,5 @@ pub fn neq(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
     let first = extract_num(first, env)?;
     let second = extract_num(second, env)?;
     // return result
-    Ok(Expr::Atom(Atom::new_bool(first != second)))
+    Ok(Expr::Atom(Atom::Bool(first != second)))
 }
