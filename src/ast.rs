@@ -2,11 +2,30 @@ use std::fmt;
 
 use crate::env::Env;
 use crate::errors::{NumericError, SpressoError};
+use crate::Token;
 
 pub type FuncType = fn(Vec<Expr>, &mut Env) -> Result<Expr, SpressoError>;
 
 #[derive(Clone)]
-pub enum Expr {
+pub struct Expr {
+    pub kind: ExprKind,
+    tokens: Option<Vec<Token>>,
+}
+
+impl Expr {
+    pub fn new(kind: ExprKind) -> Self {
+        Self { kind, tokens: None }
+    }
+}
+
+impl From<ExprKind> for Expr {
+    fn from(kind: ExprKind) -> Self {
+        Expr::new(kind)
+    }
+}
+
+#[derive(Clone)]
+pub enum ExprKind {
     Atom(Atom),
     List(Vec<Expr>),
     Func(FuncType),
@@ -109,7 +128,8 @@ impl std::ops::Div<Number> for Number {
                 if num == 0.0 || num == -0.0 {
                     return Err(NumericError {
                         err: "Division By Zero".to_string(),
-                    }.into());
+                    }
+                    .into());
                 }
                 match self {
                     Number::Float(lhs) => Ok(Number::Float(lhs / num)),
@@ -120,7 +140,8 @@ impl std::ops::Div<Number> for Number {
                 if num == 0 || num == -0 {
                     return Err(NumericError {
                         err: "Division By Zero".to_string(),
-                    }.into());
+                    }
+                    .into());
                 }
                 match self {
                     Number::Float(lhs) => Ok(Number::Float(lhs / num as f64)),
@@ -144,32 +165,32 @@ impl fmt::Display for Lambda {
 }
 
 fn pretty_ast(ast: &Expr, level: usize, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    match ast {
-        Expr::List(list) => {
+    match &ast.kind {
+        ExprKind::List(list) => {
             write!(f, "{}List\n", "\t".repeat(level)).unwrap();
             list.into_iter()
-                .map(|token| pretty_ast(token, level + 1, f))
+                .map(|token| pretty_ast(&token, level + 1, f))
                 .collect()
         }
-        Expr::Atom(token) => write!(f, "{}{}\n", "\t".repeat(level), token),
-        Expr::Func(..) => write!(f, "{}{}\n", "\t".repeat(level), "built-in function"),
-        Expr::Lambda(lambda) => write!(f, "{}{}\n", "\t".repeat(level), lambda),
+        ExprKind::Atom(token) => write!(f, "{}{}\n", "\t".repeat(level), token),
+        ExprKind::Func(..) => write!(f, "{}{}\n", "\t".repeat(level), "built-in function"),
+        ExprKind::Lambda(lambda) => write!(f, "{}{}\n", "\t".repeat(level), lambda),
     }
 }
 
 fn print_expr(ast: &Expr, level: usize, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    match ast {
-        Expr::List(list) => {
+    match &ast.kind {
+        ExprKind::List(list) => {
             write!(f, "[ ").unwrap();
             let hmm = list
                 .into_iter()
-                .map(|token| print_expr(token, level + 1, f))
+                .map(|token| print_expr(&token, level + 1, f))
                 .collect::<fmt::Result>();
             write!(f, "] ").unwrap();
             hmm
         }
-        Expr::Atom(token) => write!(f, "{} ", token),
-        Expr::Func(..) => write!(f, "{} ", "built-in function"),
-        Expr::Lambda(lambda) => write!(f, "{} ", lambda),
+        ExprKind::Atom(token) => write!(f, "{} ", token),
+        ExprKind::Func(..) => write!(f, "{} ", "built-in function"),
+        ExprKind::Lambda(lambda) => write!(f, "{} ", lambda),
     }
 }

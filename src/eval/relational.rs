@@ -1,5 +1,5 @@
 use crate::{
-    ast::{Atom, Expr},
+    ast::{Atom, Expr, ExprKind},
     env::Env,
     errors::{SpressoError, SyntaxError},
     eval::{execute_single, extract_num},
@@ -19,7 +19,7 @@ pub fn lt(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
     let first = extract_num(first, env)?;
     let second = extract_num(second, env)?;
     // return result
-    Ok(Expr::Atom(Atom::Bool(first < second)))
+    Ok(ExprKind::Atom(Atom::Bool(first < second)).into())
 }
 
 pub fn lteq(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
@@ -36,7 +36,7 @@ pub fn lteq(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
     let first = extract_num(first, env)?;
     let second = extract_num(second, env)?;
     // return result
-    Ok(Expr::Atom(Atom::Bool(first <= second)))
+    Ok(ExprKind::Atom(Atom::Bool(first <= second)).into())
 }
 
 pub fn gt(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
@@ -53,7 +53,7 @@ pub fn gt(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
     let first = extract_num(first, env)?;
     let second = extract_num(second, env)?;
     // return result
-    Ok(Expr::Atom(Atom::Bool(first > second)))
+    Ok(ExprKind::Atom(Atom::Bool(first > second)).into())
 }
 
 pub fn gteq(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
@@ -70,7 +70,7 @@ pub fn gteq(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
     let first = extract_num(first, env)?;
     let second = extract_num(second, env)?;
     // return result
-    Ok(Expr::Atom(Atom::Bool(first >= second)))
+    Ok(ExprKind::Atom(Atom::Bool(first >= second)).into())
 }
 
 pub fn eq(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
@@ -87,7 +87,7 @@ pub fn eq(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
     let first = extract_num(first, env)?;
     let second = extract_num(second, env)?;
     // return result
-    Ok(Expr::Atom(Atom::Bool(first == second)))
+    Ok(ExprKind::Atom(Atom::Bool(first == second)).into())
 }
 
 pub fn neq(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
@@ -104,5 +104,5 @@ pub fn neq(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
     let first = extract_num(first, env)?;
     let second = extract_num(second, env)?;
     // return result
-    Ok(Expr::Atom(Atom::Bool(first != second)))
+    Ok(ExprKind::Atom(Atom::Bool(first != second)).into())
 }

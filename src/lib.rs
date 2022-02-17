@@ -13,7 +13,7 @@ use std::str::Chars;
 use colored::Colorize;
 use itertools::Itertools;
 
-use crate::ast::{Atom, Expr, Number};
+use crate::ast::{Atom, Expr, ExprKind, Number};
 use crate::env::Env;
 use crate::errors::{RuntimeError, SpressoError, SyntaxError};
 use crate::eval::execute;
@@ -21,8 +21,8 @@ use crate::eval::execute;
 pub fn evaluate_expression(input: String, env: &mut Env) -> Result<Expr, SpressoError> {
     let mut tokenized_input: VecDeque<Token> = tokenize(input);
     let ast = parse(&mut tokenized_input)?;
-    match ast {
-        Expr::List(mut exprs) => execute(&mut exprs, env),
+    match ast.kind {
+        ExprKind::List(mut exprs) => execute(&mut exprs, env),
         _ => Err(SpressoError::from(RuntimeError::from(format!(
             "Hmm I can't execute something that is not a list: {}",
             ast
@@ -216,14 +216,14 @@ fn parse(tokens: &mut VecDeque<Token>) -> Result<Expr, SpressoError> {
                 );
             }
 
-            return Ok(Expr::List(ast));
+            return Ok(ExprKind::List(ast).into());
         }
         TokenType::CloseParen => {
             return Err(
                 SpressoError::from(SyntaxError::from("Unexpected ')'")).with_token(Some(token))
             )
         }
-        _ => Ok(Expr::Atom(parse_atom(token)?)),
+        _ => Ok(ExprKind::Atom(parse_atom(token)?).into()),
     }
 }
 

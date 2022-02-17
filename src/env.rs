@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::ops::Index;
 
-use crate::ast::{Atom, Expr};
+use crate::ast::{Atom, Expr, ExprKind};
 
 use crate::errors::{RuntimeError, SpressoError};
 use crate::eval;
@@ -17,35 +17,35 @@ impl Env {
     pub fn new() -> Self {
         let mut env = EnvMapType::new();
         // arithmetic ops
-        env.insert("+".to_string(), Expr::Func(eval::add));
-        env.insert("*".to_string(), Expr::Func(eval::mul));
-        env.insert("-".to_string(), Expr::Func(eval::sub));
-        env.insert("/".to_string(), Expr::Func(eval::div));
+        env.insert("+".to_string(), ExprKind::Func(eval::add).into());
+        env.insert("*".to_string(), ExprKind::Func(eval::mul).into());
+        env.insert("-".to_string(), ExprKind::Func(eval::sub).into());
+        env.insert("/".to_string(), ExprKind::Func(eval::div).into());
 
         // keywords
-        env.insert("define".to_string(), Expr::Func(eval::define));
-        env.insert("print".to_string(), Expr::Func(eval::print));
-        env.insert("true".to_string(), Expr::Atom(Atom::Bool(true)));
-        env.insert("false".to_string(), Expr::Atom(Atom::Bool(false)));
-        env.insert("if".to_string(), Expr::Func(eval::if_cond));
-        env.insert("lambda".to_string(), Expr::Func(eval::lambda));
-        env.insert("loop".to_string(), Expr::Func(eval::while_loop));
+        env.insert("define".to_string(), ExprKind::Func(eval::define).into());
+        env.insert("print".to_string(), ExprKind::Func(eval::print).into());
+        env.insert("true".to_string(), ExprKind::Atom(Atom::Bool(true)).into());
+        env.insert("false".to_string(), ExprKind::Atom(Atom::Bool(false)).into());
+        env.insert("if".to_string(), ExprKind::Func(eval::if_cond).into());
+        env.insert("lambda".to_string(), ExprKind::Func(eval::lambda).into());
+        env.insert("loop".to_string(), ExprKind::Func(eval::while_loop).into());
 
         // relational operators
-        env.insert(">".to_string(), Expr::Func(eval::gt));
-        env.insert("<".to_string(), Expr::Func(eval::lt));
-        env.insert(">=".to_string(), Expr::Func(eval::gteq));
-        env.insert("<=".to_string(), Expr::Func(eval::lteq));
-        env.insert("==".to_string(), Expr::Func(eval::eq));
-        env.insert("!=".to_string(), Expr::Func(eval::neq));
+        env.insert(">".to_string(), ExprKind::Func(eval::gt).into());
+        env.insert("<".to_string(), ExprKind::Func(eval::lt).into());
+        env.insert(">=".to_string(), ExprKind::Func(eval::gteq).into());
+        env.insert("<=".to_string(), ExprKind::Func(eval::lteq).into());
+        env.insert("==".to_string(), ExprKind::Func(eval::eq).into());
+        env.insert("!=".to_string(), ExprKind::Func(eval::neq).into());
 
         // logical operators
-        env.insert("not".to_string(), Expr::Func(eval::not));
-        env.insert("and".to_string(), Expr::Func(eval::and));
-        env.insert("or".to_string(), Expr::Func(eval::or));
+        env.insert("not".to_string(), ExprKind::Func(eval::not).into());
+        env.insert("and".to_string(), ExprKind::Func(eval::and).into());
+        env.insert("or".to_string(), ExprKind::Func(eval::or).into());
 
         // support for lists?
-        env.insert("'".to_string(), Expr::Func(eval::lists));
+        env.insert("'".to_string(), ExprKind::Func(eval::lists).into());
         
         Env {
             map: env,

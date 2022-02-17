@@ -1,5 +1,5 @@
 use crate::{
-    ast::{Atom, Expr, Number},
+    ast::{Atom, Expr, Number, ExprKind},
     env::Env,
     errors::{NumericError, RuntimeError, SpressoError},
     eval::execute,
@@ -11,23 +11,23 @@ fn number_op(
     init: Number,
     op: fn(Number, Number) -> Result<Number, SpressoError>,
 ) -> Result<Expr, SpressoError> {
-    Ok(Expr::Atom(Atom::Number(
+    Ok(ExprKind::Atom(Atom::Number(
         args.into_iter()
             .try_fold::<_, _, Result<Number, SpressoError>>(init, |x, y| {
                 let num = extract_num(y, env)?;
                 op(x, num)
             })?,
-    )))
+    )).into())
 }
 
 pub fn extract_num(expr: Expr, env: &mut Env) -> Result<Number, SpressoError> {
-    match expr {
-        Expr::Atom(Atom::Number(number)) => Ok(number),
-        Expr::Atom(Atom::Symbol(symbol)) => {
+    match expr.kind {
+        ExprKind::Atom(Atom::Number(number)) => Ok(number),
+        ExprKind::Atom(Atom::Symbol(symbol)) => {
             if env.contains_key(symbol.as_str()) {
                 let sym = env[&symbol.as_str()].clone();
-                match sym {
-                    Expr::Atom(Atom::Number(num)) => Ok(num),
+                match sym.kind {
+                    ExprKind::Atom(Atom::Number(num)) => Ok(num),
                     _ => Err(SpressoError::from(NumericError {
                         err: "Tried to extract num from variable but failed".to_string(),
                     })),
@@ -39,10 +39,10 @@ pub fn extract_num(expr: Expr, env: &mut Env) -> Result<Number, SpressoError> {
                 ))));
             }
         }
-        Expr::List(mut exprs) => {
+        ExprKind::List(mut exprs) => {
             let res = execute(&mut exprs, env)?;
-            match res {
-                Expr::Atom(Atom::Number(num)) => Ok(num),
+            match res.kind {
+                ExprKind::Atom(Atom::Number(num)) => Ok(num),
                 _ => Err(SpressoError::from(NumericError::from(format!(
                     "trying to perform arithmetic on non-number: {}",
                     res

@@ -6,7 +6,7 @@ use crate::{display_and_mark, Token, TokenHoarder};
 
 #[derive(Clone)]
 pub struct SpressoError {
-    detail: SpressoErrorType,
+    pub detail: SpressoErrorType,
     tokens: Option<Vec<Token>>,
 }
 

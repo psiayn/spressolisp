@@ -1,5 +1,5 @@
 use crate::{
-    ast::{Atom, Expr, Lambda},
+    ast::{Atom, Expr, Lambda, ExprKind},
     env::Env,
     errors::{RuntimeError, SpressoError},
     eval::execute_single,
@@ -15,16 +15,16 @@ pub fn lambda(args: Vec<Expr>, _env: &mut Env) -> Result<Expr, SpressoError> {
     let fn_params = args[0].clone();
     let body = args[1..].to_vec();
 
-    match fn_params {
-        Expr::Atom(Atom::Symbol(fn_param)) => Ok(Expr::Lambda(Lambda {
+    match fn_params.kind {
+        ExprKind::Atom(Atom::Symbol(fn_param)) => Ok(ExprKind::Lambda(Lambda {
             params: vec![fn_param],
             body,
-        })),
-        Expr::List(fn_params) => {
+        }).into()),
+        ExprKind::List(fn_params) => {
             let params: Result<Vec<String>, SpressoError> = fn_params
                 .into_iter()
                 .map(|param| {
-                    if let Expr::Atom(Atom::Symbol(param)) = param {
+                    if let ExprKind::Atom(Atom::Symbol(param)) = param.kind {
                         Ok(param)
                     } else {
                         Err(SpressoError::from(RuntimeError::from(
@@ -34,10 +34,10 @@ pub fn lambda(args: Vec<Expr>, _env: &mut Env) -> Result<Expr, SpressoError> {
                 })
                 .collect();
 
-            Ok(Expr::Lambda(Lambda {
+            Ok(ExprKind::Lambda(Lambda {
                 params: params?,
                 body,
-            }))
+            }).into())
         }
         _ => Err(SpressoError::from(RuntimeError::from(
             "lambda parameters must be a symbol",
@@ -76,7 +76,7 @@ pub fn execute_lambda(
                 .take_while(Result::is_ok)
                 .last()
                 // TODO: replace this with empty value (unit?)
-                .unwrap_or(Ok(Expr::Atom(Atom::Bool(false))))
+                .unwrap_or(Ok(ExprKind::Atom(Atom::Bool(false)).into()))
         })
     }
 }

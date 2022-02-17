@@ -1,5 +1,9 @@
 use spressolisp::{
-    ast::Number, env::Env, errors::SyntaxError, eval::extract_num, evaluate_expression,
+    ast::Number,
+    env::Env,
+    errors::{SpressoErrorType, SyntaxError},
+    eval::extract_num,
+    evaluate_expression,
 };
 
 #[macro_use]
@@ -20,13 +24,13 @@ fn test_addition() {
     }
     // floating point
     if let Ok(res) = evaluate_expression("(+ 12.3 43.2)".to_string(), &mut env) {
-	if let Ok(Number::Float(res)) = extract_num(res, &mut env) {
-	   assert_f64_near!(res, 55.5);
-	} else {
-	    assert!(false, "Result was not a float");
-	}
+        if let Ok(Number::Float(res)) = extract_num(res, &mut env) {
+            assert_f64_near!(res, 55.5);
+        } else {
+            assert!(false, "Result was not a float");
+        }
     } else {
-        assert!(false, "Error evaluating expression");	
+        assert!(false, "Error evaluating expression");
     }
 }
 
@@ -51,7 +55,7 @@ fn test_subtraction() {
             assert!(false, "Result was not a float");
         }
     } else {
-        assert!(false, "Error evaluating expression");	
+        assert!(false, "Error evaluating expression");
     }
 }
 
@@ -70,13 +74,13 @@ fn test_multiplication() {
     }
     // floating point
     if let Ok(res) = evaluate_expression("(* 12.3 10)".to_string(), &mut env) {
-	    if let Ok(Number::Float(res)) = extract_num(res, &mut env) {
+        if let Ok(Number::Float(res)) = extract_num(res, &mut env) {
             assert_f64_near!(res, 123.0);
-	    } else {
-	        assert!(false, "Result was not a float");
-	    }
+        } else {
+            assert!(false, "Result was not a float");
+        }
     } else {
-        assert!(false, "Error evaluating expression");	
+        assert!(false, "Error evaluating expression");
     }
 }
 
@@ -95,13 +99,13 @@ fn test_division() {
     }
     // floating point
     if let Ok(res) = evaluate_expression("(/ 12.3 10)".to_string(), &mut env) {
-	    if let Ok(Number::Float(res)) = extract_num(res, &mut env) {
+        if let Ok(Number::Float(res)) = extract_num(res, &mut env) {
             assert_f64_near!(res, 1.23);
-	    } else {
-	        assert!(false, "Result was not a float");
-	    }
+        } else {
+            assert!(false, "Result was not a float");
+        }
     } else {
-        assert!(false, "Error evaluating expression");	
+        assert!(false, "Error evaluating expression");
     }
 }
 
@@ -111,10 +115,11 @@ fn test_wrong_addition_syntax() {
     let inp = evaluate_expression("(+ 12 32".to_string(), &mut env);
 
     if let Err(err) = inp {
-        let expected = SyntaxError {
-            err: "'(' not closed".to_string(),
-        };
-        assert_eq!(err.to_string(), expected.to_string());
+        if let SpressoErrorType::Syntax(SyntaxError { err: err_str }) = err.detail {
+            assert_eq!(err_str, "'(' not closed");
+        } else {
+            assert!(false, "Wrong type of error. Hmm.");
+        }
     } else {
         assert!(false, "Invalid Expression successfully evaluated");
     }
