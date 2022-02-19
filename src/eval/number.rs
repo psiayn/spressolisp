@@ -42,7 +42,8 @@ pub fn extract_num(expr: Expr, env: &mut Env) -> Result<Number, SpressoError> {
                 return Err(SpressoError::from(RuntimeError::from(format!(
                     "Symbol not found: {}",
                     symbol
-                ))));
+                )))
+                .maybe_with_tokens(expr.get_tokens()));
             }
         }
         ExprKind::List(mut exprs) => {
@@ -52,13 +53,15 @@ pub fn extract_num(expr: Expr, env: &mut Env) -> Result<Number, SpressoError> {
                 _ => Err(SpressoError::from(NumericError::from(format!(
                     "trying to perform arithmetic on non-number: {}",
                     res
-                )))),
+                )))
+                .maybe_with_tokens(res.get_tokens())),
             }
         }
         _ => Err(SpressoError::from(NumericError::from(format!(
             "trying to perform arithmetic on non-number: {}",
             expr
-        )))),
+        )))
+        .maybe_with_tokens(expr.get_tokens())),
     }
 }
 
