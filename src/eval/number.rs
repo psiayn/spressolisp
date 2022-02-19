@@ -1,8 +1,9 @@
 use crate::{
-    ast::{Atom, Expr, Number, ExprKind},
+    ast::{Atom, Expr, ExprKind, Number},
     env::Env,
     errors::{NumericError, RuntimeError, SpressoError},
     eval::execute,
+    TokenGiver, TokenHoarder,
 };
 
 fn number_op(
@@ -11,26 +12,31 @@ fn number_op(
     init: Number,
     op: fn(Number, Number) -> Result<Number, SpressoError>,
 ) -> Result<Expr, SpressoError> {
-    Ok(ExprKind::Atom(Atom::Number(
-        args.into_iter()
-            .try_fold::<_, _, Result<Number, SpressoError>>(init, |x, y| {
-                let num = extract_num(y, env)?;
-                op(x, num)
-            })?,
-    )).into())
+    Ok(
+        ExprKind::Atom(Atom::Number(args.into_iter().try_fold::<_, _, Result<
+            Number,
+            SpressoError,
+        >>(init, |x, y| {
+            let num = extract_num(y, env)?;
+            op(x, num)
+        })?))
+        .into(),
+    )
 }
 
 pub fn extract_num(expr: Expr, env: &mut Env) -> Result<Number, SpressoError> {
     match expr.kind {
         ExprKind::Atom(Atom::Number(number)) => Ok(number),
-        ExprKind::Atom(Atom::Symbol(symbol)) => {
+        ExprKind::Atom(Atom::Symbol(ref symbol)) => {
             if env.contains_key(symbol.as_str()) {
                 let sym = env[&symbol.as_str()].clone();
                 match sym.kind {
                     ExprKind::Atom(Atom::Number(num)) => Ok(num),
                     _ => Err(SpressoError::from(NumericError {
                         err: "Tried to extract num from variable but failed".to_string(),
-                    })),
+                    })
+                    .with_tokens(sym.get_tokens())
+                    .with_tokens(expr.get_tokens())),
                 }
             } else {
                 return Err(SpressoError::from(RuntimeError::from(format!(

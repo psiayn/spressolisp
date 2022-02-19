@@ -2,7 +2,7 @@ use std::fmt;
 
 use crate::env::Env;
 use crate::errors::{NumericError, SpressoError};
-use crate::Token;
+use crate::{Token, TokenGiver, TokenHoarder};
 
 pub type FuncType = fn(Vec<Expr>, &mut Env) -> Result<Expr, SpressoError>;
 
@@ -21,6 +21,36 @@ impl Expr {
 impl From<ExprKind> for Expr {
     fn from(kind: ExprKind) -> Self {
         Expr::new(kind)
+    }
+}
+
+impl TokenHoarder for Expr {
+    fn with_token(mut self, token: Option<Token>) -> Self {
+        if let Some(token) = token {
+            if let Some(tokens) = &mut self.tokens {
+                tokens.push(token);
+            } else {
+                self.tokens = Some(vec![token]);
+            }
+        }
+        self
+    }
+}
+
+impl TokenGiver for Expr {
+    fn get_tokens(&self) -> Option<Vec<Token>> {
+        match &self.kind {
+            ExprKind::List(exprs) => {
+                let mut tokens = Vec::new();
+                for expr in exprs {
+                    if let Some(expr_tokens) = expr.get_tokens() {
+                        tokens.extend(expr_tokens);
+                    }
+                }
+                Some(tokens)
+            }
+            _ => self.tokens.clone(),
+        }
     }
 }
 
