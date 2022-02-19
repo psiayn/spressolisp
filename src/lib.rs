@@ -102,11 +102,7 @@ fn display_and_mark(f: &mut fmt::Formatter<'_>, tokens: &Vec<Token>) -> fmt::Res
     });
 
     for (_, (program, line_map)) in program_line_map.iter() {
-        write!(
-            f,
-            "In {}:\n",
-            program.name.green(),
-        )?;
+        write!(f, "In {}:\n", program.name.green(),)?;
 
         for (line_num, (col_start, col_end)) in line_map.iter() {
             write!(
@@ -251,7 +247,7 @@ fn parse(tokens: &mut VecDeque<Token>) -> Result<Expr, SpressoError> {
             // there should be a closing ")" after parsing everything inside
             if let None = tokens.pop_front() {
                 return Err(
-                    SpressoError::from(SyntaxError::from("'(' not closed")).with_token(Some(token))
+                    SpressoError::from(SyntaxError::from("'(' not closed")).with_token(token)
                 );
             }
 
@@ -259,10 +255,10 @@ fn parse(tokens: &mut VecDeque<Token>) -> Result<Expr, SpressoError> {
         }
         TokenType::CloseParen => {
             return Err(
-                SpressoError::from(SyntaxError::from("Unexpected ')'")).with_token(Some(token))
+                SpressoError::from(SyntaxError::from("Unexpected ')'")).with_token(token)
             )
         }
-        _ => Ok(Expr::from(ExprKind::Atom(parse_atom(token.clone())?)).with_token(Some(token))),
+        _ => Ok(Expr::from(ExprKind::Atom(parse_atom(token.clone())?)).with_token(token)),
     }
 }
 
@@ -281,7 +277,7 @@ fn parse_atom(token: Token) -> Result<Atom, SpressoError> {
 
             Err(
                 SpressoError::from(SyntaxError::from("Could not parse number"))
-                    .with_token(Some(token)),
+                    .with_token(token),
             )
         }
         // remove quotes from string token and store
@@ -292,24 +288,44 @@ fn parse_atom(token: Token) -> Result<Atom, SpressoError> {
         TokenType::OpenParen | TokenType::CloseParen => Err(SpressoError::from(SyntaxError::from(
             "Cannot extract atom from these lol",
         ))
-        .with_token(Some(token))),
+        .with_token(token)),
     }
 }
 
 trait TokenHoarder {
-    fn with_token(self, token: Option<Token>) -> Self;
+    fn with_token(self, token: Token) -> Self;
 
-    fn with_tokens(mut self, tokens: Option<Vec<Token>>) -> Self
+    fn with_tokens(mut self, tokens: Vec<Token>) -> Self
+    where
+        Self: Sized,
+    {
+        for token in tokens {
+            self = self.with_token(token);
+        }
+
+        self
+    }
+
+    fn maybe_with_tokens(self, tokens: Option<Vec<Token>>) -> Self
     where
         Self: Sized,
     {
         if let Some(tokens) = tokens {
-            for token in tokens {
-                self = self.with_token(Some(token));
-            }
+            self.with_tokens(tokens)
+        } else {
+            self
         }
+    }
 
-        self
+    fn maybe_with_token(self, token: Option<Token>) -> Self
+    where
+        Self: Sized,
+    {
+        if let Some(token) = token {
+            self.with_token(token)
+        } else {
+            self
+        }
     }
 }
 

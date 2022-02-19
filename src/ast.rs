@@ -25,13 +25,11 @@ impl From<ExprKind> for Expr {
 }
 
 impl TokenHoarder for Expr {
-    fn with_token(mut self, token: Option<Token>) -> Self {
-        if let Some(token) = token {
-            if let Some(tokens) = &mut self.tokens {
-                tokens.push(token);
-            } else {
-                self.tokens = Some(vec![token]);
-            }
+    fn with_token(mut self, token: Token) -> Self {
+        if let Some(tokens) = &mut self.tokens {
+            tokens.push(token);
+        } else {
+            self.tokens = Some(vec![token]);
         }
         self
     }

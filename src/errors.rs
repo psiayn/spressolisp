@@ -27,12 +27,10 @@ impl SpressoError {
 }
 
 impl TokenHoarder for SpressoError {
-    fn with_token(mut self, token: Option<Token>) -> Self {
-        if let Some(token) = token {
-            match &mut self.tokens {
-                Some(tokens) => tokens.push(token),
-                None => self.tokens = Some(vec![token]),
-            }
+    fn with_token(mut self, token: Token) -> Self {
+        match &mut self.tokens {
+            Some(tokens) => tokens.push(token),
+            None => self.tokens = Some(vec![token]),
         }
         self
     }

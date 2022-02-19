@@ -35,8 +35,8 @@ pub fn extract_num(expr: Expr, env: &mut Env) -> Result<Number, SpressoError> {
                     _ => Err(SpressoError::from(NumericError {
                         err: "Tried to extract num from variable but failed".to_string(),
                     })
-                    .with_tokens(sym.get_tokens())
-                    .with_tokens(expr.get_tokens())),
+                    .maybe_with_tokens(sym.get_tokens())
+                    .maybe_with_tokens(expr.get_tokens())),
                 }
             } else {
                 return Err(SpressoError::from(RuntimeError::from(format!(
