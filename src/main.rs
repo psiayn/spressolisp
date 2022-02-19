@@ -26,6 +26,7 @@ fn main() {
 
     // create the env
     let mut env = Env::new();
+    let mut input_num = 0;
 
     // start the eval loop
     loop {
@@ -43,11 +44,13 @@ fn main() {
                 } else if input == ".env" {
                     env.display();
                 } else {
-                    match evaluate_expression(input, &mut env) {
+                    match evaluate_expression(format!("input[{}]", input_num), input, &mut env) {
                         Ok(res) => println!("{}", res),
                         Err(err) => println!("{}", err),
                     };
                 }
+
+                input_num += 1;
             }
             Err(ReadlineError::Interrupted) => break,
             Err(ReadlineError::Eof) => break,

@@ -18,8 +18,20 @@ use crate::env::Env;
 use crate::errors::{RuntimeError, SpressoError, SyntaxError};
 use crate::eval::execute;
 
-pub fn evaluate_expression(input: String, env: &mut Env) -> Result<Expr, SpressoError> {
-    let mut tokenized_input: VecDeque<Token> = tokenize(input);
+pub fn evaluate_expression(
+    name: String,
+    input: String,
+    env: &mut Env,
+) -> Result<Expr, SpressoError> {
+    // we store individual lines of the program because we need to print lines during error
+    let program_lines = input.lines().map(|s| s.to_string()).collect();
+    let program = Rc::new(Program {
+        name,
+        text: input,
+        lines: program_lines,
+    });
+
+    let mut tokenized_input: VecDeque<Token> = tokenize(program);
     let ast = parse(&mut tokenized_input)?;
     match ast.kind {
         ExprKind::List(mut exprs) => execute(&mut exprs, env),
@@ -30,6 +42,20 @@ pub fn evaluate_expression(input: String, env: &mut Env) -> Result<Expr, Spresso
     }
 }
 
+pub struct Program {
+    /// Name of the program
+    ///
+    /// This will be `input[num]` when executing from the REPL,
+    /// where `num` is the input number.
+    name: String,
+    /// Entire text of the program
+    text: String,
+    /// Text split by lines.
+    ///
+    /// Used to quickly get a particular line given the line number.
+    lines: Vec<String>,
+}
+
 #[derive(Clone)]
 pub struct Token {
     text: String,
@@ -38,15 +64,32 @@ pub struct Token {
     line_num: usize,
     col_num_start: usize,
     col_num_end: usize,
-    program_lines: Rc<Vec<String>>,
+    program: Rc<Program>,
     type_: TokenType,
 }
 
 fn display_and_mark(f: &mut fmt::Formatter<'_>, tokens: &Vec<Token>) -> fmt::Result {
-    let mut line_map = BTreeMap::<usize, (usize, usize)>::new();
-    let program_lines = Rc::clone(&tokens[0].program_lines);
+    // we store a mapping of
+    // program_ptr => (program,
+    //                 line_num => (lower bound of highlighted part,
+    //                              upper bound of highlighted part)
+    //                )
+    //
+    // The program_ptr is stored as raw pointer to the underlying Program stored in the Rc.
+    // A raw pointer because I didn't want to do the effort of making Program impl Eq, Hash, etc.
+    // required to make it a valid key. A pointer works just fine and does not need unsafe either
+    // (because we never dereference it).
+    let mut program_line_map =
+        BTreeMap::<*const Program, (Rc<Program>, BTreeMap<usize, (usize, usize)>)>::new();
 
     tokens.iter().for_each(|token| {
+        let program_key = Rc::as_ptr(&token.program);
+
+        let (_, line_map) = program_line_map.entry(program_key).or_insert((
+            Rc::clone(&token.program),
+            BTreeMap::<usize, (usize, usize)>::new(),
+        ));
+
         if line_map.contains_key(&token.line_num) {
             let entry = line_map.entry(token.line_num);
             entry.and_modify(|val| {
@@ -58,19 +101,27 @@ fn display_and_mark(f: &mut fmt::Formatter<'_>, tokens: &Vec<Token>) -> fmt::Res
         }
     });
 
-    for (line_num, (col_start, col_end)) in line_map.iter() {
+    for (_, (program, line_map)) in program_line_map.iter() {
         write!(
             f,
-            "{} {}\n",
-            format!("{:<width$}|", line_num, width = 4).blue(),
-            program_lines[*line_num - 1],
+            "In {}:\n",
+            program.name.green(),
         )?;
-        write!(
-            f,
-            "{space}{marker}",
-            marker = "^".repeat(col_end - col_start).yellow(),
-            space = " ".repeat(col_start + 4 + 2 - 1)
-        )?;
+
+        for (line_num, (col_start, col_end)) in line_map.iter() {
+            write!(
+                f,
+                "{} {}\n",
+                format!("{:<width$}|", line_num, width = 4).blue(),
+                program.lines[*line_num - 1],
+            )?;
+            write!(
+                f,
+                "{space}{marker}\n",
+                marker = "^".repeat(col_end - col_start).yellow(),
+                space = " ".repeat(col_start + 4 + 2 - 1)
+            )?;
+        }
     }
 
     Ok(())
@@ -85,8 +136,7 @@ enum TokenType {
     Symbol,
 }
 
-fn tokenize(input: String) -> VecDeque<Token> {
-    let program_text = Rc::new(input);
+fn tokenize(program: Rc<Program>) -> VecDeque<Token> {
     let mut tokens = VecDeque::new();
 
     // we start from 1 here
@@ -152,19 +202,8 @@ fn tokenize(input: String) -> VecDeque<Token> {
         }
     };
 
-    // Rc::clone simply increases ref count
-    //   - it does not actually clone anything
-    let program_text = Rc::clone(&program_text);
     // we will be processing each char one by one using this single iterator
-    let mut chars = program_text.chars().peekable();
-
-    // we store individual lines of the program because we need to print lines during error
-    let program_lines = Rc::new(
-        Rc::clone(&program_text)
-            .lines()
-            .map(|s| s.to_string())
-            .collect(),
-    );
+    let mut chars = program.text.chars().peekable();
 
     // loop until chars are present
     while let Some(c) = chars.next() {
@@ -183,7 +222,7 @@ fn tokenize(input: String) -> VecDeque<Token> {
                 line_num,
                 col_num_start,
                 col_num_end: col_num,
-                program_lines: Rc::clone(&program_lines),
+                program: Rc::clone(&program),
                 type_,
             })
         }
@@ -223,7 +262,7 @@ fn parse(tokens: &mut VecDeque<Token>) -> Result<Expr, SpressoError> {
                 SpressoError::from(SyntaxError::from("Unexpected ')'")).with_token(Some(token))
             )
         }
-        _ => Ok(ExprKind::Atom(parse_atom(token)?).into()),
+        _ => Ok(Expr::from(ExprKind::Atom(parse_atom(token.clone())?)).with_token(Some(token))),
     }
 }
 
