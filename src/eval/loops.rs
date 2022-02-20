@@ -27,13 +27,15 @@ pub fn while_loop(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> 
             } else {
                 return Err(SpressoError::from(RuntimeError::from(
                     "Trying to use a non bool for condition",
-                )).maybe_with_tokens(args[0].get_tokens()));
+                ))
+                .maybe_with_tokens(args[0].get_tokens()));
             }
         }
         return Ok(ExprKind::Atom(Atom::Bool(true)).into());
     } else {
-        Err(SpressoError::from(RuntimeError::from(
-            "Trying to use a non bool for condition",
-        )).maybe_with_tokens(args[0].get_tokens()))
+        Err(
+            SpressoError::from(RuntimeError::from("Trying to use a non bool for condition"))
+                .maybe_with_tokens(args[0].get_tokens()),
+        )
     }
 }
