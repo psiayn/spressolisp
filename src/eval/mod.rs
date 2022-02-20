@@ -15,15 +15,20 @@ pub use relational::*;
 use crate::{
     ast::{Atom, Expr, ExprKind},
     env::Env,
-    errors::{SpressoError, RuntimeError},
+    errors::{RuntimeError, SpressoError},
+    TokenGiver, TokenHoarder,
 };
 
 pub fn execute(exprs: &mut Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
     let first_arg = exprs[0].clone();
     match first_arg.kind {
-        ExprKind::Func(func) => func(exprs[1..].to_vec(), env),
-        ExprKind::Atom(Atom::Symbol(symbol)) => {
-            let sym = env.get_symbol(symbol.as_str())?;
+        ExprKind::Func(func) => {
+            func(exprs[1..].to_vec(), env).maybe_with_tokens(first_arg.get_tokens())
+        }
+        ExprKind::Atom(Atom::Symbol(ref symbol)) => {
+            let sym = env
+                .get_symbol(symbol.as_str())?
+                .maybe_with_tokens(first_arg.get_tokens());
 
             if exprs.len() > 1 {
                 exprs[0] = sym;
@@ -39,7 +44,7 @@ pub fn execute(exprs: &mut Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoErro
 
 pub fn execute_single(expr: Expr, env: &mut Env) -> Result<Expr, SpressoError> {
     match expr.kind {
-        ExprKind::Func(func) => func(vec![], env),
+        ExprKind::Func(func) => func(vec![], env).maybe_with_tokens(expr.get_tokens()),
         ExprKind::Atom(Atom::Symbol(symbol)) => Ok(env.get_symbol(symbol.as_str())?),
         ExprKind::List(mut exprs) => execute(&mut exprs, env),
         ExprKind::Lambda(lambda) => execute_lambda(lambda, vec![], env),
@@ -48,9 +53,15 @@ pub fn execute_single(expr: Expr, env: &mut Env) -> Result<Expr, SpressoError> {
 }
 
 pub fn define(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
-    let mut args = args.clone();
-    let variable_name = args.remove(0);
-    let result = execute(&mut args, env)?;
+    if args.len() != 2 {
+        return Err(SpressoError::from(RuntimeError::from(
+            "define needs a variable name and a value to assign to it.",
+        ))
+        .maybe_with_tokens(args.get_tokens()));
+    }
+
+    let variable_name = args[0].clone();
+    let result = execute_single(args[1].clone(), env)?.maybe_with_tokens(args.get_tokens());
     env.insert(&variable_name.to_string().trim(), result.clone());
     Ok(result)
 }

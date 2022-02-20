@@ -12,16 +12,15 @@ fn number_op(
     init: Number,
     op: fn(Number, Number) -> Result<Number, SpressoError>,
 ) -> Result<Expr, SpressoError> {
-    Ok(
-        ExprKind::Atom(Atom::Number(args.into_iter().try_fold::<_, _, Result<
-            Number,
-            SpressoError,
-        >>(init, |x, y| {
-            let num = extract_num(y, env)?;
-            op(x, num)
-        })?))
-        .into(),
-    )
+    let tokens = args.get_tokens();
+    Ok(Expr::from(ExprKind::Atom(Atom::Number(
+        args.into_iter()
+            .try_fold::<_, _, Result<Number, SpressoError>>(init, |x, y| {
+                let num = extract_num(y, env)?;
+                op(x, num)
+            })?,
+    )))
+    .maybe_with_tokens(tokens))
 }
 
 pub fn extract_num(expr: Expr, env: &mut Env) -> Result<Number, SpressoError> {
@@ -82,5 +81,9 @@ pub fn sub(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
 pub fn div(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
     let mut args = args.clone();
     let start = extract_num(args.remove(0), env)?;
-    number_op(args, env, start, |x, y| x / y)
+    // TODO: find a better way instead of cloning
+    match number_op(args.clone(), env, start, |x, y| x / y) {
+        Err(err) => Err(err.maybe_with_tokens(args.get_tokens())),
+        Ok(res) => Ok(res),
+    }
 }

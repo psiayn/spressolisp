@@ -38,10 +38,12 @@ pub fn evaluate_expression(
         _ => Err(SpressoError::from(RuntimeError::from(format!(
             "Hmm I can't execute something that is not a list: {}",
             ast
-        )))),
+        )))
+        .maybe_with_tokens(ast.get_tokens())),
     }
 }
 
+#[derive(Debug)]
 pub struct Program {
     /// Name of the program
     ///
@@ -56,7 +58,7 @@ pub struct Program {
     lines: Vec<String>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Token {
     text: String,
     // TODO: some tokens like string could go across multiple lines
@@ -123,7 +125,7 @@ fn display_and_mark(f: &mut fmt::Formatter<'_>, tokens: &Vec<Token>) -> fmt::Res
     Ok(())
 }
 
-#[derive(PartialEq, Clone)]
+#[derive(PartialEq, Clone, Debug)]
 enum TokenType {
     OpenParen,
     CloseParen,
@@ -254,9 +256,7 @@ fn parse(tokens: &mut VecDeque<Token>) -> Result<Expr, SpressoError> {
             return Ok(ExprKind::List(ast).into());
         }
         TokenType::CloseParen => {
-            return Err(
-                SpressoError::from(SyntaxError::from("Unexpected ')'")).with_token(token)
-            )
+            return Err(SpressoError::from(SyntaxError::from("Unexpected ')'")).with_token(token))
         }
         _ => Ok(Expr::from(ExprKind::Atom(parse_atom(token.clone())?)).with_token(token)),
     }
@@ -275,10 +275,7 @@ fn parse_atom(token: Token) -> Result<Atom, SpressoError> {
                 return Ok(Atom::Number(Number::Float(num)));
             }
 
-            Err(
-                SpressoError::from(SyntaxError::from("Could not parse number"))
-                    .with_token(token),
-            )
+            Err(SpressoError::from(SyntaxError::from("Could not parse number")).with_token(token))
         }
         // remove quotes from string token and store
         TokenType::String => Ok(Atom::String(
@@ -329,6 +326,34 @@ trait TokenHoarder {
     }
 }
 
+// with_token should work when both value and error are hoarders
+impl<T, E> TokenHoarder for Result<T, E>
+where
+    T: TokenHoarder,
+    E: TokenHoarder,
+{
+    fn with_token(self, token: Token) -> Self {
+        match self {
+            Ok(val) => Ok(val.with_token(token)),
+            Err(err) => Err(err.with_token(token)),
+        }
+    }
+}
+
 trait TokenGiver {
     fn get_tokens(&self) -> Option<Vec<Token>>;
+}
+
+// get_tokens should work when both value and error are givers
+impl<T, E> TokenGiver for Result<T, E>
+where
+    T: TokenGiver,
+    E: TokenGiver,
+{
+    fn get_tokens(&self) -> Option<Vec<Token>> {
+        match self {
+            Ok(val) => val.get_tokens(),
+            Err(err) => err.get_tokens(),
+        }
+    }
 }

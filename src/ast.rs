@@ -38,17 +38,23 @@ impl TokenHoarder for Expr {
 impl TokenGiver for Expr {
     fn get_tokens(&self) -> Option<Vec<Token>> {
         match &self.kind {
-            ExprKind::List(exprs) => {
-                let mut tokens = Vec::new();
-                for expr in exprs {
-                    if let Some(expr_tokens) = expr.get_tokens() {
-                        tokens.extend(expr_tokens);
-                    }
-                }
-                Some(tokens)
-            }
+            ExprKind::List(exprs) => exprs.get_tokens(),
             _ => self.tokens.clone(),
         }
+    }
+}
+
+impl TokenGiver for Vec<Expr> {
+    fn get_tokens(&self) -> Option<Vec<Token>> {
+        let mut tokens = Vec::new();
+
+        for expr in self {
+            if let Some(expr_tokens) = expr.get_tokens() {
+                tokens.extend(expr_tokens);
+            }
+        }
+
+        Some(tokens)
     }
 }
 
