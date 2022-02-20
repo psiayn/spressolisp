@@ -61,7 +61,7 @@ pub fn define(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
     }
 
     let variable_name = args[0].clone();
-    let result = execute_single(args[1].clone(), env).maybe_with_tokens(args.get_tokens())?;
+    let result = execute_single(args[1].clone(), env)?.maybe_with_tokens(args.get_tokens());
     env.insert(&variable_name.to_string().trim(), result.clone());
     Ok(result)
 }
