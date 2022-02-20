@@ -22,19 +22,17 @@ use crate::{
 pub fn execute(exprs: &mut Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
     let first_arg = exprs[0].clone();
     match first_arg.kind {
-        ExprKind::Func(func) => {
-            func(exprs[1..].to_vec(), env).maybe_with_tokens(first_arg.get_tokens())
-        }
+        ExprKind::Func(func) => func(exprs[1..].to_vec(), env),
         ExprKind::Atom(Atom::Symbol(ref symbol)) => {
             let sym = env
-                .get_symbol(symbol.as_str())?
+                .get_symbol(symbol.as_str())
                 .maybe_with_tokens(first_arg.get_tokens());
 
             if exprs.len() > 1 {
-                exprs[0] = sym;
+                exprs[0] = sym?;
                 execute(exprs, env)
             } else {
-                Ok(sym)
+                sym
             }
         }
         ExprKind::Lambda(lambda) => execute_lambda(lambda, exprs[1..].to_vec(), env),
@@ -44,8 +42,10 @@ pub fn execute(exprs: &mut Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoErro
 
 pub fn execute_single(expr: Expr, env: &mut Env) -> Result<Expr, SpressoError> {
     match expr.kind {
-        ExprKind::Func(func) => func(vec![], env).maybe_with_tokens(expr.get_tokens()),
-        ExprKind::Atom(Atom::Symbol(symbol)) => Ok(env.get_symbol(symbol.as_str())?),
+        ExprKind::Func(func) => func(vec![], env),
+        ExprKind::Atom(Atom::Symbol(ref symbol)) => env
+            .get_symbol(symbol.as_str())
+            .maybe_with_tokens(expr.get_tokens()),
         ExprKind::List(mut exprs) => execute(&mut exprs, env),
         ExprKind::Lambda(lambda) => execute_lambda(lambda, vec![], env),
         ExprKind::Atom(_) => Ok(expr),
@@ -61,7 +61,7 @@ pub fn define(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
     }
 
     let variable_name = args[0].clone();
-    let result = execute_single(args[1].clone(), env)?.maybe_with_tokens(args.get_tokens());
+    let result = execute_single(args[1].clone(), env).maybe_with_tokens(args.get_tokens())?;
     env.insert(&variable_name.to_string().trim(), result.clone());
     Ok(result)
 }
