@@ -2,11 +2,12 @@ pub mod ast;
 pub mod env;
 pub mod errors;
 pub mod eval;
+mod utils;
 
 use core::fmt;
-use std::cmp;
 use std::collections::{BTreeMap, VecDeque};
 use std::iter::Peekable;
+use std::ops::RangeInclusive;
 use std::rc::Rc;
 use std::str::Chars;
 
@@ -17,6 +18,7 @@ use crate::ast::{Atom, Expr, ExprKind, Number};
 use crate::env::Env;
 use crate::errors::{RuntimeError, SpressoError, SyntaxError};
 use crate::eval::execute;
+use crate::utils::range_stack::RangeStack;
 
 pub fn evaluate_expression(
     name: String,
@@ -71,10 +73,10 @@ pub struct Token {
 }
 
 fn display_and_mark(f: &mut fmt::Formatter<'_>, tokens: &Vec<Token>) -> fmt::Result {
+    type Ranges = Vec<RangeInclusive<usize>>;
     // we store a mapping of
     // program_ptr => (program,
-    //                 line_num => (lower bound of highlighted part,
-    //                              upper bound of highlighted part)
+    //                 line_num => (ranges to highlight)
     //                )
     //
     // The program_ptr is stored as raw pointer to the underlying Program stored in the Rc.
@@ -82,43 +84,45 @@ fn display_and_mark(f: &mut fmt::Formatter<'_>, tokens: &Vec<Token>) -> fmt::Res
     // required to make it a valid key. A pointer works just fine and does not need unsafe either
     // (because we never dereference it).
     let mut program_line_map =
-        BTreeMap::<*const Program, (Rc<Program>, BTreeMap<usize, (usize, usize)>)>::new();
+        BTreeMap::<*const Program, (Rc<Program>, BTreeMap<usize, Ranges>)>::new();
 
     tokens.iter().for_each(|token| {
         let program_key = Rc::as_ptr(&token.program);
 
-        let (_, line_map) = program_line_map.entry(program_key).or_insert((
-            Rc::clone(&token.program),
-            BTreeMap::<usize, (usize, usize)>::new(),
-        ));
+        let (_, line_map) = program_line_map
+            .entry(program_key)
+            .or_insert((Rc::clone(&token.program), BTreeMap::<usize, Ranges>::new()));
 
-        if line_map.contains_key(&token.line_num) {
-            let entry = line_map.entry(token.line_num);
-            entry.and_modify(|val| {
-                val.0 = cmp::min(val.0, token.col_num_start);
-                val.1 = cmp::max(val.1, token.col_num_end);
-            });
-        } else {
-            line_map.insert(token.line_num, (token.col_num_start, token.col_num_end));
-        }
+        let ranges = line_map.entry(token.line_num).or_insert(Vec::new());
+        ranges.push(token.col_num_start..=token.col_num_end);
     });
 
     for (_, (program, line_map)) in program_line_map.iter() {
         write!(f, "In {}:\n", program.name.green(),)?;
 
-        for (line_num, (col_start, col_end)) in line_map.iter() {
+        for (line_num, ranges) in line_map.iter() {
+            // print line with line number
             write!(
                 f,
-                "{} {}\n",
-                format!("{:<width$}|", line_num, width = 4).blue(),
+                "{}| {}\n",
+                format!("{:<width$}", line_num, width = 4).blue(),
                 program.lines[*line_num - 1],
             )?;
-            write!(
-                f,
-                "{space}{marker}\n",
-                marker = "^".repeat(col_end - col_start).yellow(),
-                space = " ".repeat(col_start + 4 + 2 - 1)
-            )?;
+
+            let ranges: RangeStack = ranges.clone().into_iter().collect();
+            let first_start = *ranges.ranges.first().unwrap_or(&(0..=0)).start();
+            write!(f, "{}", " ".repeat(4 + 2 - 1 + first_start))?;
+            let mut last_marked = first_start;
+            for range in ranges.ranges {
+                write!(
+                    f,
+                    "{space}{marker}",
+                    marker = "^".repeat(range.end() - range.start()).yellow(),
+                    space = " ".repeat(range.start() - last_marked)
+                )?;
+                last_marked = *range.end();
+            }
+            write!(f, "\n")?;
         }
     }
 
