@@ -3,13 +3,15 @@ use crate::{
     env::Env,
     errors::{RuntimeError, SpressoError},
     eval::execute_single,
+    TokenGiver, TokenHoarder,
 };
 
 pub fn while_loop(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
     if args.len() < 2 {
         return Err(SpressoError::from(RuntimeError::from(
             "Loop statement should have a condition and a list of expressions to evaluate",
-        )));
+        ))
+        .maybe_with_tokens(args.get_tokens()));
     }
     let condition = execute_single(args[0].clone(), env)?;
     let body = args[1..].to_vec();
@@ -19,18 +21,19 @@ pub fn while_loop(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> 
             for expr in body.clone() {
                 execute_single(expr, env)?;
             }
-            if let ExprKind::Atom(Atom::Bool(boolean)) = execute_single(args[0].clone(), env)?.kind {
+            if let ExprKind::Atom(Atom::Bool(boolean)) = execute_single(args[0].clone(), env)?.kind
+            {
                 cond = boolean;
             } else {
                 return Err(SpressoError::from(RuntimeError::from(
                     "Trying to use a non bool for condition",
-                )));
+                )).maybe_with_tokens(args[0].get_tokens()));
             }
         }
         return Ok(ExprKind::Atom(Atom::Bool(true)).into());
     } else {
         Err(SpressoError::from(RuntimeError::from(
             "Trying to use a non bool for condition",
-        )))
+        )).maybe_with_tokens(args[0].get_tokens()))
     }
 }
