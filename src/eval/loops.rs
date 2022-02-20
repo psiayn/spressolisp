@@ -28,6 +28,7 @@ pub fn while_loop(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> 
                 return Err(SpressoError::from(RuntimeError::from(
                     "Trying to use a non bool for condition",
                 ))
+                .maybe_with_tokens(condition.get_tokens())
                 .maybe_with_tokens(args[0].get_tokens()));
             }
         }
@@ -35,6 +36,7 @@ pub fn while_loop(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> 
     } else {
         Err(
             SpressoError::from(RuntimeError::from("Trying to use a non bool for condition"))
+                .maybe_with_tokens(condition.get_tokens())
                 .maybe_with_tokens(args[0].get_tokens()),
         )
     }
