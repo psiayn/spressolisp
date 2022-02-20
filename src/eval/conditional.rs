@@ -3,11 +3,12 @@ use crate::{
     env::Env,
     errors::{RuntimeError, SpressoError},
     eval::execute_single,
+    TokenGiver, TokenHoarder,
 };
 
 pub fn if_cond(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
     if !(args.len() == 2 || args.len() == 3) {
-        return Err(SpressoError::from(RuntimeError::from("If statement should have a condition, expression to evaluate when true and optionally an expression to evaluate when false.")));
+        return Err(SpressoError::from(RuntimeError::from("If statement should have a condition, expression to evaluate when true and optionally an expression to evaluate when false.")).maybe_with_tokens(args.get_tokens()));
     }
 
     let mut args = args.clone();
@@ -32,6 +33,6 @@ pub fn if_cond(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
     } else {
         Err(SpressoError::from(RuntimeError::from(
             "Trying to use a non bool for condition",
-        )))
+        )).maybe_with_tokens(cond.get_tokens()))
     }
 }
