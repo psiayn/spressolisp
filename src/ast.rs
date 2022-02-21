@@ -190,6 +190,34 @@ impl std::ops::Div<Number> for Number {
 pub struct Lambda {
     pub params: Vec<String>,
     pub body: Vec<Expr>,
+    param_tokens: Vec<Token>,
+}
+
+impl Lambda {
+    pub fn new(params: Vec<String>, body: Vec<Expr>) -> Self {
+        Self {
+            params,
+            body,
+            param_tokens: Vec::new(),
+        }
+    }
+}
+
+/// Note: Lambda itself should only store the tokens of its parameters
+/// Tokens of the body are stored inside the body itself.
+impl TokenHoarder for Lambda {
+    fn with_token(mut self, token: Token) -> Self {
+        self.param_tokens.push(token);
+        self
+    }
+}
+
+/// Note: Lambda itself only stores the tokens of its parameters.
+/// Tokens of the body can be retrieved by `lambda.body.get_tokens()`.
+impl TokenGiver for Lambda {
+    fn get_tokens(&self) -> Option<Vec<Token>> {
+        Some(self.param_tokens.clone())
+    }
 }
 
 impl fmt::Display for Lambda {
