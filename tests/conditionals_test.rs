@@ -1,118 +1,28 @@
-use spressolisp::{
-    ast::{Atom, Expr, ExprKind, Number},
-    env::Env,
-    eval::extract_num,
-    evaluate_expression,
-};
+#[macro_use]
+extern crate assert_float_eq;
+
+pub mod common;
+
+use common::{check_integer_expr, check_conditional};
 
 #[test]
 fn test_relops() {
-    let mut env = Env::new();
-    if let Ok(Expr {
-        kind: ExprKind::Atom(Atom::Bool(res)),
-        ..
-    }) = evaluate_expression("(> 1 2)".to_string(), &mut env)
-    {
-        assert!(!res, "Expected false but got true");
-    } else {
-        assert!(false, "Error evaluating expression");
-    }
-
-    if let Ok(Expr {
-        kind: ExprKind::Atom(Atom::Bool(res)),
-        ..
-    }) = evaluate_expression("(< 1 2)".to_string(), &mut env)
-    {
-        assert!(res, "Expected true but got false");
-    } else {
-        assert!(false, "Error evaluating expression");
-    }
-
-    if let Ok(Expr {
-        kind: ExprKind::Atom(Atom::Bool(res)),
-        ..
-    }) = evaluate_expression("(>= 1 2)".to_string(), &mut env)
-    {
-        assert!(!res, "Expected false but got true");
-    } else {
-        assert!(false, "Error evaluating expression");
-    }
-
-    if let Ok(Expr {
-        kind: ExprKind::Atom(Atom::Bool(res)),
-        ..
-    }) = evaluate_expression("(<= 2 2)".to_string(), &mut env)
-    {
-        assert!(res, "Expected true but got false");
-    } else {
-        assert!(false, "Error evaluating expression");
-    }
-
-    if let Ok(Expr {
-        kind: ExprKind::Atom(Atom::Bool(res)),
-        ..
-    }) = evaluate_expression("(== 2 2)".to_string(), &mut env)
-    {
-        assert!(res, "Expected true but got false");
-    } else {
-        assert!(false, "Error evaluating expression");
-    }
-
-    if let Ok(Expr {
-        kind: ExprKind::Atom(Atom::Bool(res)),
-        ..
-    }) = evaluate_expression("(!= 1 2)".to_string(), &mut env)
-    {
-        assert!(res, "Expected true but got false");
-    } else {
-        assert!(false, "Error evaluating expression");
-    }
+    check_conditional("(> 1 2)", false);
+    check_conditional("(< 1 2)", true);
+    check_conditional("(>= 1 2)", false);
+    check_conditional("(<= 2 2)", true);
+    check_conditional("(== 2 2)", true);
+    check_conditional("(!= 1 2)", true);
 }
 
 #[test]
 fn test_conditional_ops() {
-    let mut env = Env::new();
-    if let Ok(Expr {
-        kind: ExprKind::Atom(Atom::Bool(res)),
-        ..
-    }) = evaluate_expression("(not true)".to_string(), &mut env)
-    {
-        assert!(!res, "Expected false but got true");
-    } else {
-        assert!(false, "Error evaluating expression");
-    }
-
-    if let Ok(Expr {
-        kind: ExprKind::Atom(Atom::Bool(res)),
-        ..
-    }) = evaluate_expression("(and (> 1 2) (> 3 2))".to_string(), &mut env)
-    {
-        assert!(!res, "Expected false but got true");
-    } else {
-        assert!(false, "Error evaluating expression");
-    }
-
-    if let Ok(Expr {
-        kind: ExprKind::Atom(Atom::Bool(res)),
-        ..
-    }) = evaluate_expression("(or (> 1 2) (> 3 2))".to_string(), &mut env)
-    {
-        assert!(res, "Expected true but got false");
-    } else {
-        assert!(false, "Error evaluating expression");
-    }
+    check_conditional("(not true)", false);
+    check_conditional("(and (> 1 2) (> 3 2))", false);
+    check_conditional("(or (> 1 2) (> 3 2))", true);
 }
 
 #[test]
 fn test_conditional() {
-    let mut env = Env::new();
-    if let Ok(res) = evaluate_expression("(if true (print 10) (print 11))".to_string(), &mut env) {
-        if let Ok(Number::Int(res)) = extract_num(res, &mut env) {
-            assert_eq!(res, 10);
-        } else {
-            assert!(false, "Result is not an integer");
-        }
-    } else {
-        assert!(false, "Error evaluating expression");
-    }
+    check_integer_expr("(if true (print 10) (print 11))", 10);
 }
