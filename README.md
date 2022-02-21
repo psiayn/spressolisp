@@ -9,10 +9,11 @@ lisp in rust
 - [x] relational ops
 - [x] logical ops
 - [x] strings
-- [ ] revamp tokenizer and parser
+- [x] revamp tokenizer and parser
     - [x] strings with spaces in them
     - [x] track line and col num for each token
-    - [ ] keep track of token(s) for each expr
+    - [x] keep track of token(s) for each expr
+- [x] show context for errors - mark the exact token which caused an error
 - [x] loops
 - [ ] lists
 - [ ] cleanup code
