@@ -21,6 +21,7 @@ lisp in rust
 - [x] tests for conditional
 - [x] tests for lambdas
 - [x] tests for strings
+- [ ] unit type -> return this instead of `false` when there's no return value. Like `()` in Rust.
 - [ ] recursion
 - [ ] macros
 - [ ] write macro for tests so that we can reduce if else ladder
