@@ -25,7 +25,7 @@ lisp in rust
 - [ ] unit type -> return this instead of `false` when there's no return value. Like `()` in Rust.
 - [ ] recursion
 - [ ] macros
-- [ ] write macro for tests so that we can reduce if else ladder
+- [x] refactor tests to reduce if else ladder
 - [ ] functional programming stuff
   - [ ] map
   - [ ] reduce
