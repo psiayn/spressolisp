@@ -1,5 +1,5 @@
 use crate::{
-    ast::{Atom, Expr},
+    ast::{Atom, Expr, ExprKind},
     env::Env,
     errors::{RuntimeError, SpressoError},
     eval::execute_single,
@@ -14,9 +14,11 @@ pub fn and(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
 
     let lhs = execute_single(args[0].clone(), env)?;
     let rhs = execute_single(args[1].clone(), env)?;
-    match lhs {
-        Expr::Atom(Atom::Bool(lhs)) => match rhs {
-            Expr::Atom(Atom::Bool(rhs)) => return Ok(Expr::Atom(Atom::Bool(lhs && rhs))),
+    match lhs.kind {
+        ExprKind::Atom(Atom::Bool(lhs)) => match rhs.kind {
+            ExprKind::Atom(Atom::Bool(rhs)) => {
+                return Ok(ExprKind::Atom(Atom::Bool(lhs && rhs)).into())
+            }
             _ => {
                 return Err(SpressoError::from(RuntimeError::from(
                     "RHS needs to be bool",
@@ -40,9 +42,11 @@ pub fn or(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
 
     let lhs = execute_single(args[0].clone(), env)?;
     let rhs = execute_single(args[1].clone(), env)?;
-    match lhs {
-        Expr::Atom(Atom::Bool(lhs)) => match rhs {
-            Expr::Atom(Atom::Bool(rhs)) => return Ok(Expr::Atom(Atom::Bool(lhs || rhs))),
+    match lhs.kind {
+        ExprKind::Atom(Atom::Bool(lhs)) => match rhs.kind {
+            ExprKind::Atom(Atom::Bool(rhs)) => {
+                return Ok(ExprKind::Atom(Atom::Bool(lhs || rhs)).into())
+            }
             _ => {
                 return Err(SpressoError::from(RuntimeError::from(
                     "RHS needs to be bool",
@@ -65,8 +69,8 @@ pub fn not(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
     }
 
     let expr = execute_single(args[0].clone(), env)?;
-    match expr {
-        Expr::Atom(Atom::Bool(arg)) => return Ok(Expr::Atom(Atom::Bool(!arg))),
+    match expr.kind {
+        ExprKind::Atom(Atom::Bool(arg)) => return Ok(ExprKind::Atom(Atom::Bool(!arg)).into()),
         _ => {
             return Err(SpressoError::from(RuntimeError::from(
                 "arg needs to be bool",

@@ -9,10 +9,11 @@ lisp in rust
 - [x] relational ops
 - [x] logical ops
 - [x] strings
-- [ ] revamp tokenizer and parser
+- [x] revamp tokenizer and parser
     - [x] strings with spaces in them
     - [x] track line and col num for each token
-    - [ ] keep track of token(s) for each expr
+    - [x] keep track of token(s) for each expr
+- [x] show context for errors - mark the exact token which caused an error
 - [x] loops
 - [ ] lists
 - [ ] cleanup code
@@ -21,9 +22,10 @@ lisp in rust
 - [x] tests for conditional
 - [x] tests for lambdas
 - [x] tests for strings
+- [ ] unit type -> return this instead of `false` when there's no return value. Like `()` in Rust.
 - [ ] recursion
 - [ ] macros
-- [ ] write macro for tests so that we can reduce if else ladder
+- [x] refactor tests to reduce if else ladder
 - [ ] functional programming stuff
   - [ ] map
   - [ ] reduce

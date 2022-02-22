@@ -2,41 +2,134 @@ pub mod ast;
 pub mod env;
 pub mod errors;
 pub mod eval;
+mod utils;
 
-use std::collections::VecDeque;
+use core::fmt;
+use std::collections::{BTreeMap, VecDeque};
 use std::iter::Peekable;
+use std::ops::RangeInclusive;
 use std::rc::Rc;
 use std::str::Chars;
 
+use colored::Colorize;
 use itertools::Itertools;
 
-use crate::ast::{Atom, Expr, Number};
+use crate::ast::{Atom, Expr, ExprKind, Number};
 use crate::env::Env;
 use crate::errors::{RuntimeError, SpressoError, SyntaxError};
 use crate::eval::execute;
+use crate::utils::range_stack::RangeStack;
 
-pub fn evaluate_expression(input: String, env: &mut Env) -> Result<Expr, SpressoError> {
-    let mut tokenized_input: VecDeque<Token> = tokenize(input);
+pub fn evaluate_expression(
+    name: String,
+    input: String,
+    env: &mut Env,
+) -> Result<Expr, SpressoError> {
+    // we store individual lines of the program because we need to print lines during error
+    let program_lines = input.lines().map(|s| s.to_string()).collect();
+    let program = Rc::new(Program {
+        name,
+        text: input,
+        lines: program_lines,
+    });
+
+    let mut tokenized_input: VecDeque<Token> = tokenize(program);
     let ast = parse(&mut tokenized_input)?;
-    match ast {
-        Expr::List(mut exprs) => execute(&mut exprs, env),
-        _ => Err(SpressoError::Runtime(RuntimeError::from(format!(
+    match ast.kind {
+        ExprKind::List(mut exprs) => execute(&mut exprs, env),
+        _ => Err(SpressoError::from(RuntimeError::from(format!(
             "Hmm I can't execute something that is not a list: {}",
             ast
-        )))),
+        )))
+        .maybe_with_tokens(ast.get_tokens())),
     }
 }
 
-struct Token {
+#[derive(Debug)]
+pub struct Program {
+    /// Name of the program
+    ///
+    /// This will be `input[num]` when executing from the REPL,
+    /// where `num` is the input number.
+    name: String,
+    /// Entire text of the program
     text: String,
+    /// Text split by lines.
+    ///
+    /// Used to quickly get a particular line given the line number.
+    lines: Vec<String>,
+}
+
+#[derive(Clone, Debug)]
+pub struct Token {
+    text: String,
+    // TODO: some tokens like string could go across multiple lines
+    // store both line_num_start and line_num_end
     line_num: usize,
     col_num_start: usize,
     col_num_end: usize,
-    program_text: Rc<String>,
+    program: Rc<Program>,
     type_: TokenType,
 }
 
-#[derive(PartialEq)]
+fn display_and_mark(f: &mut fmt::Formatter<'_>, tokens: &Vec<Token>) -> fmt::Result {
+    type Ranges = Vec<RangeInclusive<usize>>;
+    // we store a mapping of
+    // program_ptr => (program,
+    //                 line_num => (ranges to highlight)
+    //                )
+    //
+    // The program_ptr is stored as raw pointer to the underlying Program stored in the Rc.
+    // A raw pointer because I didn't want to do the effort of making Program impl Eq, Hash, etc.
+    // required to make it a valid key. A pointer works just fine and does not need unsafe either
+    // (because we never dereference it).
+    let mut program_line_map =
+        BTreeMap::<*const Program, (Rc<Program>, BTreeMap<usize, Ranges>)>::new();
+
+    tokens.iter().for_each(|token| {
+        let program_key = Rc::as_ptr(&token.program);
+
+        let (_, line_map) = program_line_map
+            .entry(program_key)
+            .or_insert((Rc::clone(&token.program), BTreeMap::<usize, Ranges>::new()));
+
+        let ranges = line_map.entry(token.line_num).or_insert(Vec::new());
+        ranges.push(token.col_num_start..=token.col_num_end);
+    });
+
+    for (_, (program, line_map)) in program_line_map.iter() {
+        write!(f, "In {}:\n", program.name.green(),)?;
+
+        for (line_num, ranges) in line_map.iter() {
+            // print line with line number
+            write!(
+                f,
+                "{}| {}\n",
+                format!("{:<width$}", line_num, width = 4).blue(),
+                program.lines[*line_num - 1],
+            )?;
+
+            let ranges: RangeStack = ranges.clone().into_iter().collect();
+            let first_start = *ranges.ranges.first().unwrap_or(&(0..=0)).start();
+            write!(f, "{}", " ".repeat(4 + 2 - 1 + first_start))?;
+            let mut last_marked = first_start;
+            for range in ranges.ranges {
+                write!(
+                    f,
+                    "{space}{marker}",
+                    marker = "^".repeat(range.end() - range.start()).yellow(),
+                    space = " ".repeat(range.start() - last_marked)
+                )?;
+                last_marked = *range.end();
+            }
+            write!(f, "\n")?;
+        }
+    }
+
+    Ok(())
+}
+
+#[derive(PartialEq, Clone, Debug)]
 enum TokenType {
     OpenParen,
     CloseParen,
@@ -45,8 +138,7 @@ enum TokenType {
     Symbol,
 }
 
-fn tokenize(input: String) -> VecDeque<Token> {
-    let program_text = Rc::new(input);
+fn tokenize(program: Rc<Program>) -> VecDeque<Token> {
     let mut tokens = VecDeque::new();
 
     // we start from 1 here
@@ -112,11 +204,8 @@ fn tokenize(input: String) -> VecDeque<Token> {
         }
     };
 
-    // Rc::clone simply increases ref count
-    //   - it does not actually clone anything
-    let program_text = Rc::clone(&program_text);
     // we will be processing each char one by one using this single iterator
-    let mut chars = program_text.chars().peekable();
+    let mut chars = program.text.chars().peekable();
 
     // loop until chars are present
     while let Some(c) = chars.next() {
@@ -128,14 +217,14 @@ fn tokenize(input: String) -> VecDeque<Token> {
             // new col number is old + size of current token
             // when there isn't any token, char_processor handles
             // incrementing col_num
-            let col_num_end = col_num + new_token.len();
+            col_num += new_token.len();
 
             tokens.push_back(Token {
                 text: new_token,
                 line_num,
                 col_num_start,
-                col_num_end,
-                program_text: Rc::clone(&program_text),
+                col_num_end: col_num,
+                program: Rc::clone(&program),
                 type_,
             })
         }
@@ -144,11 +233,11 @@ fn tokenize(input: String) -> VecDeque<Token> {
     tokens
 }
 
-fn parse(tokens: &mut VecDeque<Token>) -> Result<Expr, SyntaxError> {
+fn parse(tokens: &mut VecDeque<Token>) -> Result<Expr, SpressoError> {
     let token = match tokens.pop_front() {
         Some(token) => token,
         // no tokens (vec was empty)
-        None => return Err(SyntaxError::from("Unexpected EOF".to_string())),
+        None => return Err(SyntaxError::from("Unexpected EOF".to_string()).into()),
     };
 
     match token.type_ {
@@ -163,20 +252,24 @@ fn parse(tokens: &mut VecDeque<Token>) -> Result<Expr, SyntaxError> {
 
             // there should be a closing ")" after parsing everything inside
             if let None = tokens.pop_front() {
-                return Err(SyntaxError::from("'(' not closed"));
+                return Err(
+                    SpressoError::from(SyntaxError::from("'(' not closed")).with_token(token)
+                );
             }
 
-            return Ok(Expr::List(ast));
+            return Ok(ExprKind::List(ast).into());
         }
-        TokenType::CloseParen => return Err(SyntaxError::from("Unexpected ')'")),
-        _ => Ok(Expr::Atom(parse_atom(token)?)),
+        TokenType::CloseParen => {
+            return Err(SpressoError::from(SyntaxError::from("Unexpected ')'")).with_token(token))
+        }
+        _ => Ok(Expr::from(ExprKind::Atom(parse_atom(token.clone())?)).with_token(token)),
     }
 }
 
-fn parse_atom(token: Token) -> Result<Atom, SyntaxError> {
+fn parse_atom(token: Token) -> Result<Atom, SpressoError> {
     match token.type_ {
         TokenType::Number => {
-            let text = token.text;
+            let text = token.text.clone();
 
             if let Ok(num) = text.parse::<i64>() {
                 return Ok(Atom::Number(Number::Int(num)));
@@ -186,11 +279,85 @@ fn parse_atom(token: Token) -> Result<Atom, SyntaxError> {
                 return Ok(Atom::Number(Number::Float(num)));
             }
 
-            Err(SyntaxError::from("Could not parse number"))
-        },
+            Err(SpressoError::from(SyntaxError::from("Could not parse number")).with_token(token))
+        }
         // remove quotes from string token and store
-        TokenType::String => Ok(Atom::String(token.text[1..token.text.len()-1].to_string())),
+        TokenType::String => Ok(Atom::String(
+            token.text[1..token.text.len() - 1].to_string(),
+        )),
         TokenType::Symbol => Ok(Atom::Symbol(token.text)),
-        TokenType::OpenParen | TokenType::CloseParen => Err(SyntaxError::from("Cannot extract atom from these lol"))
+        TokenType::OpenParen | TokenType::CloseParen => Err(SpressoError::from(SyntaxError::from(
+            "Cannot extract atom from these lol",
+        ))
+        .with_token(token)),
+    }
+}
+
+trait TokenHoarder {
+    fn with_token(self, token: Token) -> Self;
+
+    fn with_tokens(mut self, tokens: Vec<Token>) -> Self
+    where
+        Self: Sized,
+    {
+        for token in tokens {
+            self = self.with_token(token);
+        }
+
+        self
+    }
+
+    fn maybe_with_tokens(self, tokens: Option<Vec<Token>>) -> Self
+    where
+        Self: Sized,
+    {
+        if let Some(tokens) = tokens {
+            self.with_tokens(tokens)
+        } else {
+            self
+        }
+    }
+
+    fn maybe_with_token(self, token: Option<Token>) -> Self
+    where
+        Self: Sized,
+    {
+        if let Some(token) = token {
+            self.with_token(token)
+        } else {
+            self
+        }
+    }
+}
+
+// with_token should work when both value and error are hoarders
+impl<T, E> TokenHoarder for Result<T, E>
+where
+    T: TokenHoarder,
+    E: TokenHoarder,
+{
+    fn with_token(self, token: Token) -> Self {
+        match self {
+            Ok(val) => Ok(val.with_token(token)),
+            Err(err) => Err(err.with_token(token)),
+        }
+    }
+}
+
+trait TokenGiver {
+    fn get_tokens(&self) -> Option<Vec<Token>>;
+}
+
+// get_tokens should work when both value and error are givers
+impl<T, E> TokenGiver for Result<T, E>
+where
+    T: TokenGiver,
+    E: TokenGiver,
+{
+    fn get_tokens(&self) -> Option<Vec<Token>> {
+        match self {
+            Ok(val) => val.get_tokens(),
+            Err(err) => err.get_tokens(),
+        }
     }
 }

@@ -1,37 +1,22 @@
-use spressolisp::{ast::{Expr, Atom}, env::Env, evaluate_expression};
+#[macro_use]
+extern crate assert_float_eq;
+
+pub mod common;
+
+use common::{check_string_expr_in_env, eval_expr_in_env};
+
+use spressolisp::env::Env;
 
 #[test]
 fn test_string_nospace() {
     let mut env = Env::new();
-    if let Ok(_) = evaluate_expression("(define x \"helloworld\")".to_string(), &mut env) {
-        if let Ok(res) = evaluate_expression("(x)".to_string(), &mut env) {
-            if let Expr::Atom(Atom::String(s)) = res {
-                assert_eq!(s, "helloworld");
-            } else {
-                assert!(false, "Result is not an integer");
-            }
-        } else {
-            assert!(false, "Error evaluating expression");
-        }
-    } else {
-        assert!(false, "Error evaluating expression");
-    }
+    eval_expr_in_env("(define x \"helloworld\")", &mut env);
+    check_string_expr_in_env("(x)", "helloworld", &mut env);
 }
 
 #[test]
 fn test_string_space() {
     let mut env = Env::new();
-    if let Ok(_) = evaluate_expression("(define x \"hello world\")".to_string(), &mut env) {
-        if let Ok(res) = evaluate_expression("(x)".to_string(), &mut env) {
-            if let Expr::Atom(Atom::String(s)) = res {
-                assert_eq!(s, "hello world");
-            } else {
-                assert!(false, "Result is not an integer");
-            }
-        } else {
-            assert!(false, "Error evaluating expression");
-        }
-    } else {
-        assert!(false, "Error evaluating expression");
-    }
+    eval_expr_in_env("(define x \"hello world\")", &mut env);
+    check_string_expr_in_env("(x)", "hello world", &mut env);
 }

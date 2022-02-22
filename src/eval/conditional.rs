@@ -1,13 +1,14 @@
 use crate::{
-    ast::{Atom, Expr},
+    ast::{Atom, Expr, ExprKind},
     env::Env,
     errors::{RuntimeError, SpressoError},
     eval::execute_single,
+    TokenGiver, TokenHoarder,
 };
 
 pub fn if_cond(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
     if !(args.len() == 2 || args.len() == 3) {
-        return Err(SpressoError::from(RuntimeError::from("If statement should have a condition, expression to evaluate when true and optionally an expression to evaluate when false.")));
+        return Err(SpressoError::from(RuntimeError::from("If statement should have a condition, expression to evaluate when true and optionally an expression to evaluate when false.")).maybe_with_tokens(args.get_tokens()));
     }
 
     let mut args = args.clone();
@@ -15,7 +16,7 @@ pub fn if_cond(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
 
     let cond = execute_single(cond, env)?;
 
-    if let Expr::Atom(Atom::Bool(boolean)) = cond {
+    if let ExprKind::Atom(Atom::Bool(boolean)) = cond.kind {
         if boolean {
             // execute true
             let true_cond = args.remove(0);
@@ -26,12 +27,12 @@ pub fn if_cond(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
                 let false_cond = args.pop().unwrap();
                 execute_single(false_cond, env)
             } else {
-                Ok(Expr::Atom(Atom::Bool(false)))
+                Ok(ExprKind::Atom(Atom::Bool(false)).into())
             }
         }
     } else {
         Err(SpressoError::from(RuntimeError::from(
             "Trying to use a non bool for condition",
-        )))
+        )).maybe_with_tokens(cond.get_tokens()))
     }
 }

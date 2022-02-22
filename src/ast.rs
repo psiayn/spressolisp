@@ -2,11 +2,64 @@ use std::fmt;
 
 use crate::env::Env;
 use crate::errors::{NumericError, SpressoError};
+use crate::{Token, TokenGiver, TokenHoarder};
 
 pub type FuncType = fn(Vec<Expr>, &mut Env) -> Result<Expr, SpressoError>;
 
 #[derive(Clone)]
-pub enum Expr {
+pub struct Expr {
+    pub kind: ExprKind,
+    tokens: Option<Vec<Token>>,
+}
+
+impl Expr {
+    pub fn new(kind: ExprKind) -> Self {
+        Self { kind, tokens: None }
+    }
+}
+
+impl From<ExprKind> for Expr {
+    fn from(kind: ExprKind) -> Self {
+        Expr::new(kind)
+    }
+}
+
+impl TokenHoarder for Expr {
+    fn with_token(mut self, token: Token) -> Self {
+        if let Some(tokens) = &mut self.tokens {
+            tokens.push(token);
+        } else {
+            self.tokens = Some(vec![token]);
+        }
+        self
+    }
+}
+
+impl TokenGiver for Expr {
+    fn get_tokens(&self) -> Option<Vec<Token>> {
+        match &self.kind {
+            ExprKind::List(exprs) => exprs.get_tokens(),
+            _ => self.tokens.clone(),
+        }
+    }
+}
+
+impl TokenGiver for Vec<Expr> {
+    fn get_tokens(&self) -> Option<Vec<Token>> {
+        let mut tokens = Vec::new();
+
+        for expr in self {
+            if let Some(expr_tokens) = expr.get_tokens() {
+                tokens.extend(expr_tokens);
+            }
+        }
+
+        Some(tokens)
+    }
+}
+
+#[derive(Clone)]
+pub enum ExprKind {
     Atom(Atom),
     List(Vec<Expr>),
     Func(FuncType),
@@ -107,9 +160,10 @@ impl std::ops::Div<Number> for Number {
         match rhs {
             Number::Float(num) => {
                 if num == 0.0 || num == -0.0 {
-                    return Err(SpressoError::Numeric(NumericError {
+                    return Err(NumericError {
                         err: "Division By Zero".to_string(),
-                    }));
+                    }
+                    .into());
                 }
                 match self {
                     Number::Float(lhs) => Ok(Number::Float(lhs / num)),
@@ -118,9 +172,10 @@ impl std::ops::Div<Number> for Number {
             }
             Number::Int(num) => {
                 if num == 0 || num == -0 {
-                    return Err(SpressoError::Numeric(NumericError {
+                    return Err(NumericError {
                         err: "Division By Zero".to_string(),
-                    }));
+                    }
+                    .into());
                 }
                 match self {
                     Number::Float(lhs) => Ok(Number::Float(lhs / num as f64)),
@@ -131,11 +186,38 @@ impl std::ops::Div<Number> for Number {
     }
 }
 
-
 #[derive(Clone)]
 pub struct Lambda {
     pub params: Vec<String>,
     pub body: Vec<Expr>,
+    param_tokens: Vec<Token>,
+}
+
+impl Lambda {
+    pub fn new(params: Vec<String>, body: Vec<Expr>) -> Self {
+        Self {
+            params,
+            body,
+            param_tokens: Vec::new(),
+        }
+    }
+}
+
+/// Note: Lambda itself should only store the tokens of its parameters
+/// Tokens of the body are stored inside the body itself.
+impl TokenHoarder for Lambda {
+    fn with_token(mut self, token: Token) -> Self {
+        self.param_tokens.push(token);
+        self
+    }
+}
+
+/// Note: Lambda itself only stores the tokens of its parameters.
+/// Tokens of the body can be retrieved by `lambda.body.get_tokens()`.
+impl TokenGiver for Lambda {
+    fn get_tokens(&self) -> Option<Vec<Token>> {
+        Some(self.param_tokens.clone())
+    }
 }
 
 impl fmt::Display for Lambda {
@@ -145,31 +227,32 @@ impl fmt::Display for Lambda {
 }
 
 fn pretty_ast(ast: &Expr, level: usize, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    match ast {
-        Expr::List(list) => {
+    match &ast.kind {
+        ExprKind::List(list) => {
             write!(f, "{}List\n", "\t".repeat(level)).unwrap();
             list.into_iter()
-                .map(|token| pretty_ast(token, level + 1, f))
+                .map(|token| pretty_ast(&token, level + 1, f))
                 .collect()
         }
-        Expr::Atom(token) => write!(f, "{}{}\n", "\t".repeat(level), token),
-        Expr::Func(..) => write!(f, "{}{}\n", "\t".repeat(level), "built-in function"),
-        Expr::Lambda(lambda) => write!(f, "{}{}\n", "\t".repeat(level), lambda),
+        ExprKind::Atom(token) => write!(f, "{}{}\n", "\t".repeat(level), token),
+        ExprKind::Func(..) => write!(f, "{}{}\n", "\t".repeat(level), "built-in function"),
+        ExprKind::Lambda(lambda) => write!(f, "{}{}\n", "\t".repeat(level), lambda),
     }
 }
 
 fn print_expr(ast: &Expr, level: usize, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    match ast {
-        Expr::List(list) => {
+    match &ast.kind {
+        ExprKind::List(list) => {
             write!(f, "[ ").unwrap();
-            let hmm = list.into_iter()
-                .map(|token| print_expr(token, level + 1, f))
+            let hmm = list
+                .into_iter()
+                .map(|token| print_expr(&token, level + 1, f))
                 .collect::<fmt::Result>();
             write!(f, "] ").unwrap();
             hmm
         }
-        Expr::Atom(token) => write!(f, "{} ", token),
-        Expr::Func(..) => write!(f, "{} ", "built-in function"),
-        Expr::Lambda(lambda) => write!(f, "{} ", lambda),
+        ExprKind::Atom(token) => write!(f, "{} ", token),
+        ExprKind::Func(..) => write!(f, "{} ", "built-in function"),
+        ExprKind::Lambda(lambda) => write!(f, "{} ", lambda),
     }
 }

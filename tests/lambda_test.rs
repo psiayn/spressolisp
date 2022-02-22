@@ -1,37 +1,22 @@
-use spressolisp::{ast::Number, env::Env, eval::extract_num, evaluate_expression};
+#[macro_use]
+extern crate assert_float_eq;
+
+pub mod common;
+
+use common::{check_integer_expr_in_env, eval_expr_in_env};
+
+use spressolisp::env::Env;
 
 #[test]
 fn test_lambda_basic() {
     let mut env = Env::new();
-    if let Ok(_) = evaluate_expression("(define mul_100 (lambda x (* x 100)))".to_string(), &mut env) {
-        if let Ok(res) = evaluate_expression("(mul_100 3)".to_string(), &mut env) {
-            if let Ok(Number::Int(res)) = extract_num(res, &mut env) {
-                assert_eq!(res, 300);
-            } else {
-                assert!(false, "Result is not an integer");
-            }
-        } else {
-            assert!(false, "Error evaluating expression");
-        }
-    } else {
-        assert!(false, "Error evaluating expression");
-    }
+    eval_expr_in_env("(define mul_100 (lambda x (* x 100)))", &mut env);
+    check_integer_expr_in_env("(mul_100 3)", 300, &mut env);
 }
 
 #[test]
 fn test_lambda_two_arg() {
     let mut env = Env::new();
-    if let Ok(_) = evaluate_expression("(define mul (lambda (x y) (* x y)))".to_string(), &mut env) {
-        if let Ok(res) = evaluate_expression("(mul 3 4)".to_string(), &mut env) {
-            if let Ok(Number::Int(res)) = extract_num(res, &mut env) {
-                assert_eq!(res, 12);
-            } else {
-                assert!(false, "Result is not an integer");
-            }
-        } else {
-            assert!(false, "Error evaluating expression");
-        }
-    } else {
-        assert!(false, "Error evaluating expression");
-    }
+    eval_expr_in_env("(define mul (lambda (x y) (* x y)))", &mut env);
+    check_integer_expr_in_env("(mul 3 4)", 12, &mut env);
 }

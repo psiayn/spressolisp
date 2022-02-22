@@ -1,23 +1,16 @@
-use spressolisp::{ast::Number, env::Env, eval::extract_num, evaluate_expression};
+#[macro_use]
+extern crate assert_float_eq;
+
+pub mod common;
+
+use common::{check_integer_expr_in_env, eval_expr_in_env};
+
+use spressolisp::env::Env;
 
 #[test]
 fn test_loop_basic() {
     let mut env = Env::new();
-    if let Ok(_) = evaluate_expression("(define x 100)".to_string(), &mut env) {
-        if let Ok(_) = evaluate_expression("(loop (> x 50) (define x (- x 10)))".to_string(), &mut env) {
-            if let Ok(res) = evaluate_expression("(print x)".to_string(), &mut env) {
-                if let Ok(Number::Int(res)) = extract_num(res, &mut env) {
-                    assert_eq!(res, 50);
-                } else {
-                    assert!(false, "Result is not an integer");
-                }
-            } else {
-                assert!(false, "Error evaluating expression");
-            }
-        } else {
-            assert!(false, "Error evaluating expression");
-        }
-    } else {
-        assert!(false, "Error evaluating expression");
-    }
+    eval_expr_in_env("(define x 100)", &mut env);
+    eval_expr_in_env("(loop (> x 50) (define x (- x 10)))", &mut env);
+    check_integer_expr_in_env("(print x)", 50, &mut env);
 }
