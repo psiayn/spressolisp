@@ -4,6 +4,7 @@ mod logical;
 mod loops;
 mod number;
 mod relational;
+mod lists;
 
 pub use conditional::*;
 pub use functions::*;
@@ -11,6 +12,7 @@ pub use logical::*;
 pub use loops::*;
 pub use number::*;
 pub use relational::*;
+pub use lists::*;
 
 use crate::{
     ast::{Atom, Expr, ExprKind},
