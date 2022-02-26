@@ -34,10 +34,7 @@ pub fn map(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
                 .map(|ele| functions::execute_lambda(lambda.clone(), vec![ele], env))
                 .collect();
             // handle errors and return the result
-            match res {
-                Ok(result) => return Ok(Expr::from(ExprKind::List(result))),
-                Err(err) => return Err(err),
-            };
+            return Ok(Expr::from(ExprKind::List(res?)));
         } else {
             return Err(SpressoError::from(RuntimeError::from(
                 "Map: expected list as input got something else",
@@ -72,12 +69,12 @@ pub fn append(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
             return Err(SpressoError::from(RuntimeError::from(
                 "Append: expected list as input got something else",
             ))
-            .maybe_with_tokens(list_1.get_tokens()));
+            .maybe_with_tokens(list_2.get_tokens()));
         }
     } else {
         return Err(SpressoError::from(RuntimeError::from(
             "Append: expected list as input got something else",
         ))
-        .maybe_with_tokens(list_2.get_tokens()));
+        .maybe_with_tokens(list_1.get_tokens()));
     }
 }
