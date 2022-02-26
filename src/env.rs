@@ -45,7 +45,7 @@ impl Env {
         env.insert("or".to_string(), ExprKind::Func(eval::or).into());
 
         // lists and their functions
-        env.insert("'".to_string(), ExprKind::Func(eval::lists).into());
+        env.insert("'".to_string(), ExprKind::Func(eval::list).into());
         env.insert("map".to_string(), ExprKind::Func(eval::map).into());
         env.insert("append".to_string(), ExprKind::Func(eval::append).into());
         

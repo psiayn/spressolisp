@@ -75,7 +75,7 @@ pub fn print(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
     Ok(result)
 }
 
-pub fn lists(args: Vec<Expr>, _: &mut Env) -> Result<Expr, SpressoError> {
+pub fn list(args: Vec<Expr>, _: &mut Env) -> Result<Expr, SpressoError> {
     if args.len() != 1 {
         return Err(SpressoError::from(RuntimeError::from(
             "' only needs one arg",
