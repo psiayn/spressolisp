@@ -103,3 +103,21 @@ pub fn check_conditional(expr: &str, expected: bool) {
         assert!(false, "Error evaluating expression: '{}'", expr);
     }
 }
+
+pub fn eval_list_expr(expr: &str, env: &mut Env) -> Vec<Expr> {
+    if let Expr {
+        kind: ExprKind::List(res),
+        ..
+    } = eval_expr_in_env(expr, env)
+    {
+        return res;
+    } else {
+        panic!("Error evaluating '{}' to a List", expr);
+    }
+}
+
+pub fn check_list_expr_eq(list: Vec<Expr>, expected: &str) {
+    let mut env = Env::new();
+    let expected = eval_list_expr(expected, &mut env);
+    assert_eq!(list, expected)
+}

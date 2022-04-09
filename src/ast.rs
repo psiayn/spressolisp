@@ -6,10 +6,16 @@ use crate::{Token, TokenGiver, TokenHoarder};
 
 pub type FuncType = fn(Vec<Expr>, &mut Env) -> Result<Expr, SpressoError>;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Expr {
     pub kind: ExprKind,
     tokens: Option<Vec<Token>>,
+}
+
+impl PartialEq for Expr {
+    fn eq(&self, other: &Self) -> bool {
+        self.kind == other.kind
+    }
 }
 
 impl Expr {
@@ -66,13 +72,47 @@ pub enum ExprKind {
     Lambda(Lambda),
 }
 
+impl fmt::Debug for ExprKind {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Atom(arg0) => f.debug_tuple("Atom").field(arg0).finish(),
+            Self::List(arg0) => f.debug_tuple("List").field(arg0).finish(),
+            Self::Func(_) => f.debug_tuple("Func").finish(),
+            Self::Lambda(arg0) => f.debug_tuple("Lambda").field(arg0).finish(),
+        }
+    }
+}
+
+impl PartialEq for ExprKind {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (ExprKind::Atom(l0), ExprKind::Atom(r0)) => l0 == r0,
+            (ExprKind::List(l0), ExprKind::List(r0)) => l0 == r0,
+            (ExprKind::Func(l0), ExprKind::Func(r0)) => (*l0 as usize) == (*r0 as usize),
+            (ExprKind::Lambda(l0), ExprKind::Lambda(r0)) => l0 == r0,
+            _ => false,
+        }
+    }
+
+    fn ne(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Self::Atom(l0), Self::Atom(r0)) => l0 != r0,
+            (Self::List(l0), Self::List(r0)) => l0 != r0,
+            (Self::Func(l0), Self::Func(r0)) => *l0 as usize != *r0 as usize,
+            (Self::Lambda(l0), Self::Lambda(r0)) => l0 != r0,
+            _ => false,
+        }
+    }
+}
+
 impl fmt::Display for Expr {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         print_expr(self, 0, f)
     }
 }
 
-#[derive(Debug, Clone)]
+
+#[derive(Debug, Clone, PartialEq)]
 pub enum Atom {
     Symbol(String),
     Number(Number),
@@ -186,11 +226,17 @@ impl std::ops::Div<Number> for Number {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Lambda {
     pub params: Vec<String>,
     pub body: Vec<Expr>,
     param_tokens: Vec<Token>,
+}
+
+impl PartialEq for Lambda {
+    fn eq(&self, other: &Self) -> bool {
+        self.params == other.params && self.body == other.body
+    }
 }
 
 impl Lambda {

@@ -15,7 +15,9 @@ lisp in rust
     - [x] keep track of token(s) for each expr
 - [x] show context for errors - mark the exact token which caused an error
 - [x] loops
-- [ ] lists
+- [x] lists
+  - [x] map
+  - [x] append
 - [ ] cleanup code
   - [ ] make env more functional
 - [x] tests for floats
