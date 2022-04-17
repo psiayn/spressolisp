@@ -1,0 +1,4 @@
+(define x 10)
+(define y (+ x 20))
+(print x)
+(print y)
