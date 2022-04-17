@@ -79,7 +79,7 @@ pub fn list(args: Vec<Expr>, _: &mut Env) -> Result<Expr, SpressoError> {
     if args.len() != 1 {
         return Err(SpressoError::from(RuntimeError::from(
             "' only needs one arg",
-        )));
+        )).maybe_with_tokens(args.get_tokens()));
     }
     Ok(args[0].clone())
 }
