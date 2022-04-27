@@ -40,8 +40,7 @@ pub fn evaluate_expression(
         exprs.push(parse(&mut tokenized_input)?);
     }
 
-    // TODO: use a unit type
-    let mut res = ExprKind::Atom(Atom::Bool(true)).into();
+    let mut res = ExprKind::Atom(Atom::Unit).into();
 
     for expr in exprs {
         res = execute_single(expr, env)?;
