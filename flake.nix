@@ -25,6 +25,7 @@
       # `nix develop`
       devShell = pkgs.mkShell {
         nativeBuildInputs = with pkgs; [ rustc cargo rust-analyzer rustfmt ];
+        RUST_SRC_PATH = "${pkgs.rust.packages.stable.rustPlatform.rustLibSrc}";
       };
     });
 }
