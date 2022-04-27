@@ -141,6 +141,7 @@ enum TokenType {
     Number,
     String,
     Symbol,
+    Unit,
 }
 
 fn tokenize(program: Rc<Program>) -> VecDeque<Token> {
@@ -157,7 +158,15 @@ fn tokenize(program: Rc<Program>) -> VecDeque<Token> {
      -> Option<(String, TokenType)> {
         let mut new_token = String::from(c);
         match c {
-            '(' => Some((new_token, TokenType::OpenParen)),
+            '(' => {
+                // a () is a unit type
+                if let Some(')') = chars.peek() {
+                    new_token.push(chars.next().unwrap());
+                    Some((new_token, TokenType::Unit))
+                } else {
+                    Some((new_token, TokenType::OpenParen))
+                }
+            },
             ')' => Some((new_token, TokenType::CloseParen)),
             '0'..='9' | '.' => {
                 // takes as long as numbers are found
@@ -286,6 +295,7 @@ fn parse_atom(token: Token) -> Result<Atom, SpressoError> {
 
             Err(SpressoError::from(SyntaxError::from("Could not parse number")).with_token(token))
         }
+        TokenType::Unit => Ok(Atom::Unit),
         // remove quotes from string token and store
         TokenType::String => Ok(Atom::String(
             token.text[1..token.text.len() - 1].to_string(),

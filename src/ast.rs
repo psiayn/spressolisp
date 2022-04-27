@@ -118,6 +118,7 @@ pub enum Atom {
     Number(Number),
     Bool(bool),
     String(String),
+    Unit,
 }
 
 impl fmt::Display for Atom {
@@ -127,6 +128,7 @@ impl fmt::Display for Atom {
             Atom::Number(num) => write!(f, "{}", num),
             Atom::Bool(boolean) => write!(f, "{}", boolean),
             Atom::String(string) => write!(f, "\"{}\"", string),
+            Atom::Unit => write!(f, "()"),
         }
     }
 }
