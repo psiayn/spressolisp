@@ -12,12 +12,12 @@ use std::rc::Rc;
 use std::str::Chars;
 
 use colored::Colorize;
+use eval::execute_single;
 use itertools::Itertools;
 
 use crate::ast::{Atom, Expr, ExprKind, Number};
 use crate::env::Env;
-use crate::errors::{RuntimeError, SpressoError, SyntaxError};
-use crate::eval::execute;
+use crate::errors::{SpressoError, SyntaxError};
 use crate::utils::range_stack::RangeStack;
 
 pub fn evaluate_expression(
@@ -34,15 +34,20 @@ pub fn evaluate_expression(
     });
 
     let mut tokenized_input: VecDeque<Token> = tokenize(program);
-    let ast = parse(&mut tokenized_input)?;
-    match ast.kind {
-        ExprKind::List(mut exprs) => execute(&mut exprs, env),
-        _ => Err(SpressoError::from(RuntimeError::from(format!(
-            "Hmm I can't execute something that is not a list: {}",
-            ast
-        )))
-        .maybe_with_tokens(ast.get_tokens())),
+    let mut exprs = Vec::new();
+
+    while !tokenized_input.is_empty() {
+        exprs.push(parse(&mut tokenized_input)?);
     }
+
+    // TODO: use a unit type
+    let mut res = ExprKind::Atom(Atom::Bool(true)).into();
+
+    for expr in exprs {
+        res = execute_single(expr, env)?;
+    }
+
+    Ok(res)
 }
 
 #[derive(Debug)]

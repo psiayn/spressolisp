@@ -1,4 +1,5 @@
-use std::fs::File;
+use std::env;
+use std::fs::{read_to_string, File};
 use std::path::PathBuf;
 
 use home::home_dir;
@@ -7,7 +8,7 @@ use spressolisp::{env::Env, evaluate_expression};
 use rustyline::error::ReadlineError;
 use rustyline::Editor;
 
-fn main() {
+fn repl() {
     // readline REPL
     let mut rl = Editor::<()>::new();
 
@@ -62,4 +63,22 @@ fn main() {
     }
     println!("goodbye!");
     rl.save_history(&history_path).unwrap();
+}
+
+fn execute_file(filepath: &str) {
+    let mut env = Env::new();
+
+    let contents = read_to_string(filepath).expect("Could not read file");
+
+    if let Err(err) = evaluate_expression(filepath.to_owned(), contents, &mut env) {
+        println!("{}", err);
+    };
+}
+
+fn main() {
+    if let Some(filepath) = env::args().skip(1).next() {
+        execute_file(&filepath);
+    } else {
+        repl()
+    }
 }
