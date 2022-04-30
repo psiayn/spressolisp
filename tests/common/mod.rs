@@ -7,10 +7,9 @@ use spressolisp::{
 };
 
 pub fn eval_expr_in_env(expr: &str, env: &mut Env) -> Expr {
-    if let Ok(res) = evaluate_expression("test".to_string(), expr.to_string(), env) {
-        return res;
-    } else {
-        panic!("Error evaluating '{}'", expr);
+    match evaluate_expression("test".to_string(), expr.to_string(), env) {
+        Ok(res) => res,
+        Err(err) => panic!("Error evaluating '{}':\n{}", expr, err),
     }
 }
 
