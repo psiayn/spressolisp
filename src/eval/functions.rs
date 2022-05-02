@@ -95,9 +95,11 @@ pub fn execute_lambda(
             }
 
             // return the last Ok() result (will be last expr if everything succeeded), or
-            // return false (happens when body is empty)
-            // TODO: replace this with empty value (unit?)
-            last_ok_result.unwrap_or(Ok(ExprKind::Atom(Atom::Bool(false)).into()))
+            // return a unit (when body is empty)
+            // NOTE: this technically isn't possible because the parsing for [`lambda`] (see fn
+            // above) is such that it needs a body to be specified. Perhaps there's a way to
+            // enforce this at compile time.
+            last_ok_result.unwrap_or(Ok(ExprKind::Atom(Atom::Unit).into()))
         })
     }
 }
