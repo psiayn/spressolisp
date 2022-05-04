@@ -12,5 +12,5 @@ fn test_loop_basic() {
     let mut env = Env::new();
     eval_expr_in_env("(define x 100)", &mut env);
     eval_expr_in_env("(loop (> x 50) (define x (- x 10)))", &mut env);
-    check_integer_expr_in_env("(print x)", 50, &mut env);
+    check_integer_expr_in_env("(x)", 50, &mut env);
 }

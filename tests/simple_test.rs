@@ -22,8 +22,3 @@ fn test_check_define_in_scope() {
 fn test_check_define_res() {
     check_integer_expr("(define x 100)", 100);
 }
-
-#[test]
-fn test_print() {
-    check_integer_expr("(print 100)", 100);
-}
