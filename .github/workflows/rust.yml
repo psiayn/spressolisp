@@ -22,3 +22,6 @@ jobs:
       run: cargo build --verbose
     - name: Run tests
       run: cargo test --verbose
+    - name: Check clippy
+      if: ${{ always() }}
+      run: cargo clippy --all-targets --all-features -- -D warnings
