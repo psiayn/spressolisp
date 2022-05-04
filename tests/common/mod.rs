@@ -7,10 +7,9 @@ use spressolisp::{
 };
 
 pub fn eval_expr_in_env(expr: &str, env: &mut Env) -> Expr {
-    if let Ok(res) = evaluate_expression("test".to_string(), expr.to_string(), env) {
-        res
-    } else {
-        panic!("Error evaluating '{}'", expr);
+    match evaluate_expression("test".to_string(), expr.to_string(), env) {
+        Ok(res) => res,
+        Err(err) => panic!("Error evaluating '{}':\n{}", expr, err),
     }
 }
 
@@ -118,4 +117,12 @@ pub fn check_list_expr_eq(list: Vec<Expr>, expected: &str) {
     let mut env = Env::new();
     let expected = eval_list_expr(expected, &mut env);
     assert_eq!(list, expected)
+}
+
+pub fn check_unit_expr_in_env(expr: &str, env: &mut Env) {
+    let res = eval_expr_in_env(expr, env);
+    if let ExprKind::Atom(Atom::Unit) = res.kind {
+    } else {
+        panic!("'{}' was expected to be a unit, but was not a unit.", expr);
+    }
 }

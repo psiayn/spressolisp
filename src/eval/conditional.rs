@@ -27,7 +27,7 @@ pub fn if_cond(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
                 let false_cond = args.pop().unwrap();
                 execute_single(false_cond, env)
             } else {
-                Ok(ExprKind::Atom(Atom::Bool(false)).into())
+                Ok(ExprKind::Atom(Atom::Unit).into())
             }
         }
     } else {
