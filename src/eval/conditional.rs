@@ -11,7 +11,7 @@ pub fn if_cond(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
         return Err(SpressoError::from(RuntimeError::from("If statement should have a condition, expression to evaluate when true and optionally an expression to evaluate when false.")).maybe_with_tokens(args.get_tokens()));
     }
 
-    let mut args = args.clone();
+    let mut args = args;
     let cond = args.remove(0);
 
     let cond = execute_single(cond, env)?;

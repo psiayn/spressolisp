@@ -17,16 +17,16 @@ pub fn and(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
     match lhs.kind {
         ExprKind::Atom(Atom::Bool(lhs)) => match rhs.kind {
             ExprKind::Atom(Atom::Bool(rhs)) => {
-                return Ok(ExprKind::Atom(Atom::Bool(lhs && rhs)).into())
+                Ok(ExprKind::Atom(Atom::Bool(lhs && rhs)).into())
             }
             _ => {
-                return Err(SpressoError::from(RuntimeError::from(
+                Err(SpressoError::from(RuntimeError::from(
                     "RHS needs to be bool",
                 )))
             }
         },
         _ => {
-            return Err(SpressoError::from(RuntimeError::from(
+            Err(SpressoError::from(RuntimeError::from(
                 "LHS needs to be bool",
             )))
         }
@@ -45,16 +45,16 @@ pub fn or(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
     match lhs.kind {
         ExprKind::Atom(Atom::Bool(lhs)) => match rhs.kind {
             ExprKind::Atom(Atom::Bool(rhs)) => {
-                return Ok(ExprKind::Atom(Atom::Bool(lhs || rhs)).into())
+                Ok(ExprKind::Atom(Atom::Bool(lhs || rhs)).into())
             }
             _ => {
-                return Err(SpressoError::from(RuntimeError::from(
+                Err(SpressoError::from(RuntimeError::from(
                     "RHS needs to be bool",
                 )))
             }
         },
         _ => {
-            return Err(SpressoError::from(RuntimeError::from(
+            Err(SpressoError::from(RuntimeError::from(
                 "LHS needs to be bool",
             )))
         }
@@ -70,9 +70,9 @@ pub fn not(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
 
     let expr = execute_single(args[0].clone(), env)?;
     match expr.kind {
-        ExprKind::Atom(Atom::Bool(arg)) => return Ok(ExprKind::Atom(Atom::Bool(!arg)).into()),
+        ExprKind::Atom(Atom::Bool(arg)) => Ok(ExprKind::Atom(Atom::Bool(!arg)).into()),
         _ => {
-            return Err(SpressoError::from(RuntimeError::from(
+            Err(SpressoError::from(RuntimeError::from(
                 "arg needs to be bool",
             )))
         }

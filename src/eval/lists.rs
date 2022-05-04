@@ -34,18 +34,18 @@ pub fn map(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
                 .map(|ele| functions::execute_lambda(lambda.clone(), vec![ele], env))
                 .collect();
             // handle errors and return the result
-            return Ok(Expr::from(ExprKind::List(res?)));
+            Ok(Expr::from(ExprKind::List(res?)))
         } else {
-            return Err(SpressoError::from(RuntimeError::from(
+            Err(SpressoError::from(RuntimeError::from(
                 "Map: expected list as input got something else",
             ))
-            .maybe_with_tokens(list.get_tokens()));
+            .maybe_with_tokens(list.get_tokens()))
         }
     } else {
-        return Err(SpressoError::from(RuntimeError::from(
+        Err(SpressoError::from(RuntimeError::from(
             "Map: expected lambda got something else",
         ))
-        .maybe_with_tokens(lambda.get_tokens()));
+        .maybe_with_tokens(lambda.get_tokens()))
     }
 }
 
@@ -64,17 +64,17 @@ pub fn append(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
         if let ExprKind::List(mut b) = list_2.kind {
             let mut initial_list = a.clone();
             initial_list.append(&mut b);
-            return Ok(Expr::from(ExprKind::List(initial_list)));
+            Ok(Expr::from(ExprKind::List(initial_list)))
         } else {
-            return Err(SpressoError::from(RuntimeError::from(
+            Err(SpressoError::from(RuntimeError::from(
                 "Append: expected list as input got something else",
             ))
-            .maybe_with_tokens(list_2.get_tokens()));
+                .maybe_with_tokens(list_2.get_tokens()))
         }
     } else {
-        return Err(SpressoError::from(RuntimeError::from(
+        Err(SpressoError::from(RuntimeError::from(
             "Append: expected list as input got something else",
         ))
-        .maybe_with_tokens(list_1.get_tokens()));
+            .maybe_with_tokens(list_1.get_tokens()))
     }
 }

@@ -64,12 +64,12 @@ pub fn define(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
 
     let variable_name = args[0].clone();
     let result = execute_single(args[1].clone(), env)?.maybe_with_tokens(args.get_tokens());
-    env.insert(&variable_name.to_string().trim(), result.clone());
+    env.insert(variable_name.to_string().trim(), result.clone());
     Ok(result)
 }
 
 pub fn print(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
-    let mut args = args.clone();
+    let mut args = args;
     let result = execute(&mut args, env)?;
     println!("{}", result);
     Ok(result)

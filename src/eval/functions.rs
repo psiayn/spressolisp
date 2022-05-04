@@ -97,7 +97,7 @@ pub fn execute_lambda(
             // return the last Ok() result (will be last expr if everything succeeded), or
             // return false (happens when body is empty)
             // TODO: replace this with empty value (unit?)
-            last_ok_result.unwrap_or(Ok(ExprKind::Atom(Atom::Bool(false)).into()))
+            last_ok_result.unwrap_or_else(|| Ok(ExprKind::Atom(Atom::Bool(false)).into()))
         })
     }
 }

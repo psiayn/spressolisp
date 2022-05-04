@@ -13,6 +13,12 @@ pub struct Env {
     scopes: Vec<EnvMapType>,
 }
 
+impl Default for Env {
+    fn default() -> Self {
+        Env::new()
+    }
+}
+
 impl Env {
     pub fn new() -> Self {
         let mut env = EnvMapType::new();
