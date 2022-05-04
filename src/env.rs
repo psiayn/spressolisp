@@ -25,6 +25,7 @@ impl Env {
         // keywords
         env.insert("define".to_string(), ExprKind::Func(eval::define).into());
         env.insert("print".to_string(), ExprKind::Func(eval::print).into());
+        env.insert("input".to_string(), ExprKind::Func(eval::input).into());
         env.insert("true".to_string(), ExprKind::Atom(Atom::Bool(true)).into());
         env.insert("false".to_string(), ExprKind::Atom(Atom::Bool(false)).into());
         env.insert("if".to_string(), ExprKind::Func(eval::if_cond).into());
