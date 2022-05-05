@@ -72,7 +72,7 @@ pub fn print(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
     let mut args = args.clone();
     let result = execute(&mut args, env)?;
     println!("{}", result);
-    Ok(result)
+    Ok(Expr::from(ExprKind::Atom(Atom::Unit)))
 }
 
 pub fn list(args: Vec<Expr>, _: &mut Env) -> Result<Expr, SpressoError> {
