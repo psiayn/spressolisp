@@ -16,20 +16,14 @@ pub fn and(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
     let rhs = execute_single(args[1].clone(), env)?;
     match lhs.kind {
         ExprKind::Atom(Atom::Bool(lhs)) => match rhs.kind {
-            ExprKind::Atom(Atom::Bool(rhs)) => {
-                Ok(ExprKind::Atom(Atom::Bool(lhs && rhs)).into())
-            }
-            _ => {
-                Err(SpressoError::from(RuntimeError::from(
-                    "RHS needs to be bool",
-                )))
-            }
+            ExprKind::Atom(Atom::Bool(rhs)) => Ok(ExprKind::Atom(Atom::Bool(lhs && rhs)).into()),
+            _ => Err(SpressoError::from(RuntimeError::from(
+                "RHS needs to be bool",
+            ))),
         },
-        _ => {
-            Err(SpressoError::from(RuntimeError::from(
-                "LHS needs to be bool",
-            )))
-        }
+        _ => Err(SpressoError::from(RuntimeError::from(
+            "LHS needs to be bool",
+        ))),
     }
 }
 
@@ -44,20 +38,14 @@ pub fn or(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
     let rhs = execute_single(args[1].clone(), env)?;
     match lhs.kind {
         ExprKind::Atom(Atom::Bool(lhs)) => match rhs.kind {
-            ExprKind::Atom(Atom::Bool(rhs)) => {
-                Ok(ExprKind::Atom(Atom::Bool(lhs || rhs)).into())
-            }
-            _ => {
-                Err(SpressoError::from(RuntimeError::from(
-                    "RHS needs to be bool",
-                )))
-            }
+            ExprKind::Atom(Atom::Bool(rhs)) => Ok(ExprKind::Atom(Atom::Bool(lhs || rhs)).into()),
+            _ => Err(SpressoError::from(RuntimeError::from(
+                "RHS needs to be bool",
+            ))),
         },
-        _ => {
-            Err(SpressoError::from(RuntimeError::from(
-                "LHS needs to be bool",
-            )))
-        }
+        _ => Err(SpressoError::from(RuntimeError::from(
+            "LHS needs to be bool",
+        ))),
     }
 }
 
@@ -71,10 +59,8 @@ pub fn not(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
     let expr = execute_single(args[0].clone(), env)?;
     match expr.kind {
         ExprKind::Atom(Atom::Bool(arg)) => Ok(ExprKind::Atom(Atom::Bool(!arg)).into()),
-        _ => {
-            Err(SpressoError::from(RuntimeError::from(
-                "arg needs to be bool",
-            )))
-        }
+        _ => Err(SpressoError::from(RuntimeError::from(
+            "arg needs to be bool",
+        ))),
     }
 }

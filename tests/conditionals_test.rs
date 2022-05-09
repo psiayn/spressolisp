@@ -3,7 +3,7 @@ extern crate assert_float_eq;
 
 pub mod common;
 
-use common::{check_integer_expr, check_conditional};
+use common::{check_conditional, check_integer_expr};
 
 #[test]
 fn test_relops() {

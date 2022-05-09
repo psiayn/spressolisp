@@ -1,18 +1,18 @@
 mod conditional;
 mod functions;
+mod lists;
 mod logical;
 mod loops;
 mod number;
 mod relational;
-mod lists;
 
 pub use conditional::*;
 pub use functions::*;
+pub use lists::*;
 pub use logical::*;
 pub use loops::*;
 pub use number::*;
 pub use relational::*;
-pub use lists::*;
 
 use crate::{
     ast::{Atom, Expr, ExprKind},
@@ -77,9 +77,10 @@ pub fn print(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
 
 pub fn list(args: Vec<Expr>, _: &mut Env) -> Result<Expr, SpressoError> {
     if args.len() != 1 {
-        return Err(SpressoError::from(RuntimeError::from(
-            "' only needs one arg",
-        )).maybe_with_tokens(args.get_tokens()));
+        return Err(
+            SpressoError::from(RuntimeError::from("' only needs one arg"))
+                .maybe_with_tokens(args.get_tokens()),
+        );
     }
     Ok(args[0].clone())
 }

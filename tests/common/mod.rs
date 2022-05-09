@@ -80,10 +80,7 @@ pub fn check_number_syntax_err(expr: &str, expected: &str) {
             );
         }
     } else {
-        panic!(
-            "Invalid expression '{}' evaluated successfully",
-            expr
-        );
+        panic!("Invalid expression '{}' evaluated successfully", expr);
     }
 }
 

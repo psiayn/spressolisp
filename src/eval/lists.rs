@@ -69,12 +69,12 @@ pub fn append(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
             Err(SpressoError::from(RuntimeError::from(
                 "Append: expected list as input got something else",
             ))
-                .maybe_with_tokens(list_2.get_tokens()))
+            .maybe_with_tokens(list_2.get_tokens()))
         }
     } else {
         Err(SpressoError::from(RuntimeError::from(
             "Append: expected list as input got something else",
         ))
-            .maybe_with_tokens(list_1.get_tokens()))
+        .maybe_with_tokens(list_1.get_tokens()))
     }
 }

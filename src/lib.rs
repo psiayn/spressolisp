@@ -165,7 +165,7 @@ fn tokenize(program: Rc<Program>) -> VecDeque<Token> {
                 } else {
                     Some((new_token, TokenType::OpenParen))
                 }
-            },
+            }
             ')' => Some((new_token, TokenType::CloseParen)),
             '0'..='9' | '.' => {
                 // takes as long as numbers are found

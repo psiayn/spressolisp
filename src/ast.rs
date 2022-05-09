@@ -101,7 +101,6 @@ impl fmt::Display for Expr {
     }
 }
 
-
 #[derive(Debug, Clone, PartialEq)]
 pub enum Atom {
     Symbol(String),
@@ -268,7 +267,8 @@ fn pretty_ast(ast: &Expr, level: usize, f: &mut fmt::Formatter<'_>) -> fmt::Resu
     match &ast.kind {
         ExprKind::List(list) => {
             writeln!(f, "{}List", "\t".repeat(level)).unwrap();
-            list.iter().try_for_each(|token| pretty_ast(token, level + 1, f))
+            list.iter()
+                .try_for_each(|token| pretty_ast(token, level + 1, f))
         }
         ExprKind::Atom(token) => writeln!(f, "{}{}", "\t".repeat(level), token),
         ExprKind::Func(..) => writeln!(f, "{}built-in function", "\t".repeat(level)),
@@ -280,7 +280,9 @@ fn print_expr(ast: &Expr, level: usize, f: &mut fmt::Formatter<'_>) -> fmt::Resu
     match &ast.kind {
         ExprKind::List(list) => {
             write!(f, "[ ").unwrap();
-            let hmm = list.iter().try_for_each(|token| print_expr(token, level + 1, f));
+            let hmm = list
+                .iter()
+                .try_for_each(|token| print_expr(token, level + 1, f));
             write!(f, "] ").unwrap();
             hmm
         }

@@ -31,8 +31,9 @@ pub fn if_cond(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
             }
         }
     } else {
-        Err(SpressoError::from(RuntimeError::from(
-            "Trying to use a non bool for condition",
-        )).maybe_with_tokens(cond.get_tokens()))
+        Err(
+            SpressoError::from(RuntimeError::from("Trying to use a non bool for condition"))
+                .maybe_with_tokens(cond.get_tokens()),
+        )
     }
 }

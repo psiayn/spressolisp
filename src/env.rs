@@ -32,7 +32,10 @@ impl Env {
         env.insert("define".to_string(), ExprKind::Func(eval::define).into());
         env.insert("print".to_string(), ExprKind::Func(eval::print).into());
         env.insert("true".to_string(), ExprKind::Atom(Atom::Bool(true)).into());
-        env.insert("false".to_string(), ExprKind::Atom(Atom::Bool(false)).into());
+        env.insert(
+            "false".to_string(),
+            ExprKind::Atom(Atom::Bool(false)).into(),
+        );
         env.insert("if".to_string(), ExprKind::Func(eval::if_cond).into());
         env.insert("lambda".to_string(), ExprKind::Func(eval::lambda).into());
         env.insert("loop".to_string(), ExprKind::Func(eval::while_loop).into());
@@ -54,7 +57,7 @@ impl Env {
         env.insert("'".to_string(), ExprKind::Func(eval::list).into());
         env.insert("map".to_string(), ExprKind::Func(eval::map).into());
         env.insert("append".to_string(), ExprKind::Func(eval::append).into());
-        
+
         Env {
             map: env,
             scopes: Vec::new(),
