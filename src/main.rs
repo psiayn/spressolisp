@@ -76,7 +76,7 @@ fn execute_file(filepath: &str) {
 }
 
 fn main() {
-    if let Some(filepath) = env::args().skip(1).next() {
+    if let Some(filepath) = env::args().nth(1) {
         execute_file(&filepath);
     } else {
         repl()

@@ -11,11 +11,7 @@ use spressolisp::env::Env;
 fn test_check_define_in_scope() {
     let mut env = Env::new();
     eval_expr_in_env("(define x 100)", &mut env);
-    if env.contains_key("x") {
-        assert!(true, "Env contains x");
-    } else {
-        assert!(false, "Env does not contain x");
-    }
+    assert!(env.contains_key("x"), "Env does not contain x");
 }
 
 #[test]

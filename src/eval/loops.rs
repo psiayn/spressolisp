@@ -32,7 +32,7 @@ pub fn while_loop(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> 
                 .maybe_with_tokens(args[0].get_tokens()));
             }
         }
-        return Ok(ExprKind::Atom(Atom::Unit).into());
+        Ok(ExprKind::Atom(Atom::Unit).into())
     } else {
         Err(
             SpressoError::from(RuntimeError::from("Trying to use a non bool for condition"))

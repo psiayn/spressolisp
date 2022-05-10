@@ -28,7 +28,7 @@ pub fn extract_num(expr: Expr, env: &mut Env) -> Result<Number, SpressoError> {
         ExprKind::Atom(Atom::Number(number)) => Ok(number),
         ExprKind::Atom(Atom::Symbol(ref symbol)) => {
             if env.contains_key(symbol.as_str()) {
-                let sym = env[&symbol.as_str()].clone();
+                let sym = env[symbol.as_str()].clone();
                 match sym.kind {
                     ExprKind::Atom(Atom::Number(num)) => Ok(num),
                     _ => Err(SpressoError::from(NumericError {
@@ -73,13 +73,13 @@ pub fn mul(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
 }
 
 pub fn sub(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
-    let mut args = args.clone();
+    let mut args = args;
     let start = extract_num(args.remove(0), env)?;
     number_op(args, env, start, |x, y| x - y)
 }
 
 pub fn div(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
-    let mut args = args.clone();
+    let mut args = args;
     let start = extract_num(args.remove(0), env)?;
     // TODO: find a better way instead of cloning
     match number_op(args.clone(), env, start, |x, y| x / y) {

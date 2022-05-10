@@ -49,7 +49,7 @@ impl fmt::Display for SpressoError {
             SpressoErrorType::Syntax(err) => (err.err.as_str(), "Syntax Error".red()),
             SpressoErrorType::Numeric(err) => (err.err.as_str(), "Numeric Error".red()),
         };
-        write!(f, "{}: {}\n", err_name, err_str)?;
+        writeln!(f, "{}: {}", err_name, err_str)?;
 
         if let Some(tokens) = &self.tokens {
             display_and_mark(f, tokens)?;
