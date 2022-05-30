@@ -26,19 +26,19 @@ pub fn execute(exprs: &mut Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoErro
     match first_arg.kind {
         ExprKind::Func(func) => func(exprs[1..].to_vec(), env),
         ExprKind::Atom(Atom::Symbol(ref symbol)) => {
-            let sym = env
+            let value = env
                 .get_symbol(symbol.as_str())
                 .maybe_with_tokens(first_arg.get_tokens());
 
-            if exprs.len() > 1 {
-                exprs[0] = sym?;
-                execute(exprs, env)
-            } else {
-                sym
-            }
+            exprs[0] = value?;
+            execute(exprs, env)
         }
         ExprKind::Lambda(lambda) => execute_lambda(lambda, exprs[1..].to_vec(), env),
-        _ => execute_single(first_arg, env),
+        _ => Err(SpressoError::from(RuntimeError::from(format!(
+            "this is not something I can execute: {}",
+            first_arg
+        )))
+        .maybe_with_tokens(first_arg.get_tokens())),
     }
 }
 

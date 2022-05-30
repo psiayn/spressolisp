@@ -11,12 +11,12 @@ use spressolisp::env::Env;
 fn test_string_nospace() {
     let mut env = Env::new();
     eval_expr_in_env("(define x \"helloworld\")", &mut env);
-    check_string_expr_in_env("(x)", "helloworld", &mut env);
+    check_string_expr_in_env("x", "helloworld", &mut env);
 }
 
 #[test]
 fn test_string_space() {
     let mut env = Env::new();
     eval_expr_in_env("(define x \"hello world\")", &mut env);
-    check_string_expr_in_env("(x)", "hello world", &mut env);
+    check_string_expr_in_env("x", "hello world", &mut env);
 }

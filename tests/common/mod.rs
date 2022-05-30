@@ -13,6 +13,16 @@ pub fn eval_expr_in_env(expr: &str, env: &mut Env) -> Expr {
     }
 }
 
+pub fn check_expr_error_in_env(expr: &str, expected_err: &str, env: &mut Env) {
+    match evaluate_expression("test".to_string(), expr.to_string(), env) {
+        Ok(res) => panic!(
+            "Expression which was expected to return an error, ran successfully: {}. Result: {}",
+            expr, res
+        ),
+        Err(err) => assert_eq!(err.text(), expected_err),
+    }
+}
+
 fn eval_number_expr_in_env<T>(expr: &str, env: &mut Env, cb: T)
 where
     T: Fn(Number),

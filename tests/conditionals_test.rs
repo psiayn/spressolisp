@@ -24,5 +24,5 @@ fn test_conditional_ops() {
 
 #[test]
 fn test_conditional() {
-    check_integer_expr("(if true (10) (11))", 10);
+    check_integer_expr("(if true 10 11)", 10);
 }
