@@ -1,20 +1,20 @@
 mod conditional;
 mod functions;
+mod lists;
 mod logical;
 mod loops;
 mod number;
 mod relational;
-mod lists;
 
 use std::io;
 
 pub use conditional::*;
 pub use functions::*;
+pub use lists::*;
 pub use logical::*;
 pub use loops::*;
 pub use number::*;
 pub use relational::*;
-pub use lists::*;
 
 use crate::{
     ast::{Atom, Expr, ExprKind},
@@ -78,22 +78,21 @@ pub fn print(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
 }
 
 pub fn input(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
-    match print(args, env) {
-        Ok(_) => (),
-        Err(err) => return Err(err),
-    };
+    print(args, env)?;
     let mut buffer = String::new();
-    let stdin = io::stdin();
-    stdin.read_line(&mut buffer).unwrap();
+    if let Err(err) = io::stdin().read_line(&mut buffer) {
+        return Err(SpressoError::from(RuntimeError::from(format!("{}", err))));
+    }
     buffer = buffer.trim().to_string();
     Ok(Expr::from(ExprKind::Atom(Atom::String(buffer))))
 }
 
 pub fn list(args: Vec<Expr>, _: &mut Env) -> Result<Expr, SpressoError> {
     if args.len() != 1 {
-        return Err(SpressoError::from(RuntimeError::from(
-            "' only needs one arg",
-        )).maybe_with_tokens(args.get_tokens()));
+        return Err(
+            SpressoError::from(RuntimeError::from("' only needs one arg"))
+                .maybe_with_tokens(args.get_tokens()),
+        );
     }
     Ok(args[0].clone())
 }
