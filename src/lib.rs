@@ -76,7 +76,7 @@ pub struct Token {
     type_: TokenType,
 }
 
-fn display_and_mark(f: &mut fmt::Formatter<'_>, tokens: &Vec<Token>) -> fmt::Result {
+fn display_and_mark(f: &mut fmt::Formatter<'_>, tokens: &[Token]) -> fmt::Result {
     type Ranges = Vec<RangeInclusive<usize>>;
     // we store a mapping of
     // program_ptr => (program,
@@ -102,13 +102,13 @@ fn display_and_mark(f: &mut fmt::Formatter<'_>, tokens: &Vec<Token>) -> fmt::Res
     });
 
     for (_, (program, line_map)) in program_line_map.iter() {
-        write!(f, "In {}:\n", program.name.green(),)?;
+        writeln!(f, "In {}:", program.name.green(),)?;
 
         for (line_num, ranges) in line_map.iter() {
             // print line with line number
-            write!(
+            writeln!(
                 f,
-                "{}| {}\n",
+                "{}| {}",
                 format!("{:<width$}", line_num, width = 4).blue(),
                 program.lines[*line_num - 1],
             )?;
@@ -126,7 +126,7 @@ fn display_and_mark(f: &mut fmt::Formatter<'_>, tokens: &Vec<Token>) -> fmt::Res
                 )?;
                 last_marked = *range.end();
             }
-            write!(f, "\n")?;
+            writeln!(f)?;
         }
     }
 
@@ -165,16 +165,12 @@ fn tokenize(program: Rc<Program>) -> VecDeque<Token> {
                 } else {
                     Some((new_token, TokenType::OpenParen))
                 }
-            },
+            }
             ')' => Some((new_token, TokenType::CloseParen)),
             '0'..='9' | '.' => {
                 // takes as long as numbers are found
-                let new_chars = chars.peeking_take_while(|c| match c {
-                    '0'..='9' | '.' => true,
-                    // TODO: stop only at whitespace
-                    // otherwise, show error
-                    _ => false,
-                });
+                // TODO: stop only at whitespace
+                let new_chars = chars.peeking_take_while(|c| matches!(c, '0'..='9' | '.'));
                 new_token.extend(new_chars);
                 Some((new_token, TokenType::Number))
             }
@@ -189,10 +185,7 @@ fn tokenize(program: Rc<Program>) -> VecDeque<Token> {
             }
             '"' => {
                 // takes everything before closing '"'
-                let new_chars = chars.peeking_take_while(|c| match c {
-                    '"' => false,
-                    _ => true,
-                });
+                let new_chars = chars.peeking_take_while(|c| !matches!(c, '"'));
                 new_token.extend(new_chars);
 
                 // check if string is closed
@@ -206,10 +199,7 @@ fn tokenize(program: Rc<Program>) -> VecDeque<Token> {
             _ => {
                 // take everything until some other token is found
                 // TODO: move this set of chars somewhere else
-                let new_chars = chars.peeking_take_while(|c| match c {
-                    ' ' | '\n' | '(' | ')' => false,
-                    _ => true,
-                });
+                let new_chars = chars.peeking_take_while(|c| !matches!(c, ' ' | '\n' | '(' | ')'));
                 new_token.extend(new_chars);
 
                 Some((new_token, TokenType::Symbol))
@@ -264,16 +254,16 @@ fn parse(tokens: &mut VecDeque<Token>) -> Result<Expr, SpressoError> {
             }
 
             // there should be a closing ")" after parsing everything inside
-            if let None = tokens.pop_front() {
+            if tokens.pop_front().is_none() {
                 return Err(
                     SpressoError::from(SyntaxError::from("'(' not closed")).with_token(token)
                 );
             }
 
-            return Ok(ExprKind::List(ast).into());
+            Ok(ExprKind::List(ast).into())
         }
         TokenType::CloseParen => {
-            return Err(SpressoError::from(SyntaxError::from("Unexpected ')'")).with_token(token))
+            Err(SpressoError::from(SyntaxError::from("Unexpected ')'")).with_token(token))
         }
         _ => Ok(Expr::from(ExprKind::Atom(parse_atom(token.clone())?)).with_token(token)),
     }

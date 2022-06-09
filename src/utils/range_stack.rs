@@ -40,7 +40,7 @@ impl FromIterator<Range> for RangeStack {
         I: IntoIterator<Item = Range>,
     {
         let mut raw_ranges: Vec<_> = iterator.into_iter().collect();
-        raw_ranges.sort_by(|a, b| a.start().cmp(&b.start()));
+        raw_ranges.sort_by(|a, b| a.start().cmp(b.start()));
 
         let mut range_stack = RangeStack { ranges: Vec::new() };
 

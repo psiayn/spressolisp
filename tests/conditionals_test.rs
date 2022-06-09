@@ -3,7 +3,7 @@ extern crate assert_float_eq;
 
 pub mod common;
 
-use common::{check_integer_expr, check_conditional};
+use common::{check_conditional, check_integer_expr};
 
 #[test]
 fn test_relops() {
@@ -24,5 +24,5 @@ fn test_conditional_ops() {
 
 #[test]
 fn test_conditional() {
-    check_integer_expr("(if true (print 10) (print 11))", 10);
+    check_integer_expr("(if true 10 11)", 10);
 }

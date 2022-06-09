@@ -13,6 +13,16 @@ pub fn eval_expr_in_env(expr: &str, env: &mut Env) -> Expr {
     }
 }
 
+pub fn check_expr_error_in_env(expr: &str, expected_err: &str, env: &mut Env) {
+    match evaluate_expression("test".to_string(), expr.to_string(), env) {
+        Ok(res) => panic!(
+            "Expression which was expected to return an error, ran successfully: {}. Result: {}",
+            expr, res
+        ),
+        Err(err) => assert_eq!(err.text(), expected_err),
+    }
+}
+
 fn eval_number_expr_in_env<T>(expr: &str, env: &mut Env, cb: T)
 where
     T: Fn(Number),
@@ -38,7 +48,7 @@ pub fn check_integer_expr_in_env(expr: &str, expected: i64, env: &mut Env) {
         if let Number::Int(res) = num {
             assert_eq!(res, expected);
         } else {
-            assert!(false, "Result of '{}' was not an integer", expr);
+            panic!("Result of '{}' was not an integer", expr);
         }
     });
 }
@@ -53,7 +63,7 @@ pub fn check_float_expr(expr: &str, expected: f64) {
         if let Number::Float(res) = num {
             assert_f64_near!(res, expected);
         } else {
-            assert!(false, "Result of '{}' was not an integer", expr);
+            panic!("Result of '{}' was not an integer", expr);
         }
     });
 }
@@ -74,18 +84,13 @@ pub fn check_number_syntax_err(expr: &str, expected: &str) {
         if let SpressoErrorType::Syntax(SyntaxError { err: err_str }) = err.detail {
             assert_eq!(err_str, expected);
         } else {
-            assert!(
-                false,
+            panic!(
                 "Expected syntax error for '{}', but got something else",
                 expr
             );
         }
     } else {
-        assert!(
-            false,
-            "Invalid expression '{}' evaluated successfully",
-            expr
-        );
+        panic!("Invalid expression '{}' evaluated successfully", expr);
     }
 }
 
@@ -97,9 +102,9 @@ pub fn check_conditional(expr: &str, expected: bool) {
         ..
     }) = evaluate_expression("test".to_string(), expr.to_string(), &mut env)
     {
-        assert!(expected == res, "Expected {} but got {}", expected, res);
+        assert_eq!(expected, res, "Expected {} but got {}", expected, res);
     } else {
-        assert!(false, "Error evaluating expression: '{}'", expr);
+        panic!("Error evaluating expression: '{}'", expr);
     }
 }
 
@@ -109,7 +114,7 @@ pub fn eval_list_expr(expr: &str, env: &mut Env) -> Vec<Expr> {
         ..
     } = eval_expr_in_env(expr, env)
     {
-        return res;
+        res
     } else {
         panic!("Error evaluating '{}' to a List", expr);
     }

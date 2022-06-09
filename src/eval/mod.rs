@@ -28,19 +28,19 @@ pub fn execute(exprs: &mut Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoErro
     match first_arg.kind {
         ExprKind::Func(func) => func(exprs[1..].to_vec(), env),
         ExprKind::Atom(Atom::Symbol(ref symbol)) => {
-            let sym = env
+            let value = env
                 .get_symbol(symbol.as_str())
                 .maybe_with_tokens(first_arg.get_tokens());
 
-            if exprs.len() > 1 {
-                exprs[0] = sym?;
-                execute(exprs, env)
-            } else {
-                sym
-            }
+            exprs[0] = value?;
+            execute(exprs, env)
         }
         ExprKind::Lambda(lambda) => execute_lambda(lambda, exprs[1..].to_vec(), env),
-        _ => execute_single(first_arg, env),
+        _ => Err(SpressoError::from(RuntimeError::from(format!(
+            "this is not something I can execute: {}",
+            first_arg
+        )))
+        .maybe_with_tokens(first_arg.get_tokens())),
     }
 }
 
@@ -66,15 +66,15 @@ pub fn define(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
 
     let variable_name = args[0].clone();
     let result = execute_single(args[1].clone(), env)?.maybe_with_tokens(args.get_tokens());
-    env.insert(&variable_name.to_string().trim(), result.clone());
+    env.insert(variable_name.to_string().trim(), result.clone());
     Ok(result)
 }
 
 pub fn print(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
-    let mut args = args.clone();
+    let mut args = args;
     let result = execute(&mut args, env)?;
     println!("{}", result);
-    Ok(result)
+    Ok(Expr::from(ExprKind::Atom(Atom::Unit)))
 }
 
 pub fn input(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {

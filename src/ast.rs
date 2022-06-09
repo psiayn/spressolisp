@@ -93,16 +93,6 @@ impl PartialEq for ExprKind {
             _ => false,
         }
     }
-
-    fn ne(&self, other: &Self) -> bool {
-        match (self, other) {
-            (Self::Atom(l0), Self::Atom(r0)) => l0 != r0,
-            (Self::List(l0), Self::List(r0)) => l0 != r0,
-            (Self::Func(l0), Self::Func(r0)) => *l0 as usize != *r0 as usize,
-            (Self::Lambda(l0), Self::Lambda(r0)) => l0 != r0,
-            _ => false,
-        }
-    }
 }
 
 impl fmt::Display for Expr {
@@ -110,7 +100,6 @@ impl fmt::Display for Expr {
         print_expr(self, 0, f)
     }
 }
-
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Atom {
@@ -213,7 +202,7 @@ impl std::ops::Div<Number> for Number {
                 }
             }
             Number::Int(num) => {
-                if num == 0 || num == -0 {
+                if num == 0 {
                     return Err(NumericError {
                         err: "Division By Zero".to_string(),
                     }
@@ -273,18 +262,17 @@ impl fmt::Display for Lambda {
         write!(f, "λ: [{}] -> ...", self.params.join(", "))
     }
 }
-
+#[allow(dead_code)]
 fn pretty_ast(ast: &Expr, level: usize, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match &ast.kind {
         ExprKind::List(list) => {
-            write!(f, "{}List\n", "\t".repeat(level)).unwrap();
-            list.into_iter()
-                .map(|token| pretty_ast(&token, level + 1, f))
-                .collect()
+            writeln!(f, "{}List", "\t".repeat(level)).unwrap();
+            list.iter()
+                .try_for_each(|token| pretty_ast(token, level + 1, f))
         }
-        ExprKind::Atom(token) => write!(f, "{}{}\n", "\t".repeat(level), token),
-        ExprKind::Func(..) => write!(f, "{}{}\n", "\t".repeat(level), "built-in function"),
-        ExprKind::Lambda(lambda) => write!(f, "{}{}\n", "\t".repeat(level), lambda),
+        ExprKind::Atom(token) => writeln!(f, "{}{}", "\t".repeat(level), token),
+        ExprKind::Func(..) => writeln!(f, "{}built-in function", "\t".repeat(level)),
+        ExprKind::Lambda(lambda) => writeln!(f, "{}{}", "\t".repeat(level), lambda),
     }
 }
 
@@ -293,14 +281,13 @@ fn print_expr(ast: &Expr, level: usize, f: &mut fmt::Formatter<'_>) -> fmt::Resu
         ExprKind::List(list) => {
             write!(f, "[ ").unwrap();
             let hmm = list
-                .into_iter()
-                .map(|token| print_expr(&token, level + 1, f))
-                .collect::<fmt::Result>();
+                .iter()
+                .try_for_each(|token| print_expr(token, level + 1, f));
             write!(f, "] ").unwrap();
             hmm
         }
         ExprKind::Atom(token) => write!(f, "{} ", token),
-        ExprKind::Func(..) => write!(f, "{} ", "built-in function"),
+        ExprKind::Func(..) => write!(f, "built-in function "),
         ExprKind::Lambda(lambda) => write!(f, "{} ", lambda),
     }
 }

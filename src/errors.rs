@@ -24,6 +24,26 @@ impl SpressoError {
             tokens: None,
         }
     }
+
+    /// Possibly unstable API.
+    pub fn text(&self) -> &str {
+        // TODO: consider using a trait?
+        match &self.detail {
+            SpressoErrorType::Runtime(err) => err.err.as_str(),
+            SpressoErrorType::Syntax(err) => err.err.as_str(),
+            SpressoErrorType::Numeric(err) => err.err.as_str(),
+        }
+    }
+
+    /// Possibly unstable API.
+    pub fn name(&self) -> &str {
+        // TODO: consider using a trait?
+        match &self.detail {
+            SpressoErrorType::Runtime(..) => "Runtime Error",
+            SpressoErrorType::Syntax(..) => "Syntax Error",
+            SpressoErrorType::Numeric(..) => "Numeric Error",
+        }
+    }
 }
 
 impl TokenHoarder for SpressoError {
@@ -44,12 +64,7 @@ impl TokenGiver for SpressoError {
 
 impl fmt::Display for SpressoError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let (err_str, err_name) = match &self.detail {
-            SpressoErrorType::Runtime(err) => (err.err.as_str(), "Runtime Error".red()),
-            SpressoErrorType::Syntax(err) => (err.err.as_str(), "Syntax Error".red()),
-            SpressoErrorType::Numeric(err) => (err.err.as_str(), "Numeric Error".red()),
-        };
-        write!(f, "{}: {}\n", err_name, err_str)?;
+        writeln!(f, "{}: {}", self.name().red(), self.text())?;
 
         if let Some(tokens) = &self.tokens {
             display_and_mark(f, tokens)?;
