@@ -6,6 +6,8 @@ mod loops;
 mod number;
 mod relational;
 
+use std::io;
+
 pub use conditional::*;
 pub use functions::*;
 pub use lists::*;
@@ -73,6 +75,16 @@ pub fn print(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
     let result = execute(&mut args, env)?;
     println!("{}", result);
     Ok(Expr::from(ExprKind::Atom(Atom::Unit)))
+}
+
+pub fn input(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
+    print(args, env)?;
+    let mut buffer = String::new();
+    if let Err(err) = io::stdin().read_line(&mut buffer) {
+        return Err(SpressoError::from(RuntimeError::from(format!("{}", err))));
+    }
+    buffer = buffer.trim().to_string();
+    Ok(Expr::from(ExprKind::Atom(Atom::String(buffer))))
 }
 
 pub fn list(args: Vec<Expr>, _: &mut Env) -> Result<Expr, SpressoError> {
