@@ -27,6 +27,12 @@ pub fn execute(exprs: &mut Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoErro
     let first_arg = exprs[0].clone();
     match first_arg.kind {
         ExprKind::Func(func) => func(exprs[1..].to_vec(), env),
+        ExprKind::List(mut list) => {
+            let res = execute(&mut list, env)?;
+            let mut evaluated = exprs[1..].to_vec();
+            evaluated.insert(0, res);
+            execute(&mut evaluated, env)
+        },
         ExprKind::Atom(Atom::Symbol(ref symbol)) => {
             let value = env
                 .get_symbol(symbol.as_str())
