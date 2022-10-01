@@ -11,6 +11,9 @@ home = "0.5.3" # for getting home_dir
 itertools = "0.10.2" # better iterators
 # colors in terminal
 colored = "2"
+# a space to allocate things but we don't need hashing like in a HashMap
+# or ordering like in a BTreeMap
+slab = "0.4.7"
 
 [dev-dependencies]
 # benchmarking
