@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::ops::Index;
+use std::rc::Rc;
 
 use slab::Slab;
 
@@ -11,8 +12,8 @@ use crate::eval;
 pub type EnvMapType = HashMap<String, Expr>;
 
 pub struct Env {
-    global_index: usize,
-    scopes: Vec<usize>,
+    global_index: Rc<usize>,
+    scopes: Vec<Rc<usize>>,
     scope_slab: Slab<EnvMapType>,
 }
 
@@ -65,32 +66,33 @@ impl Env {
         let mut scope_slab = Slab::new();
 
         Env {
-            global_index: scope_slab.insert(global),
+            global_index: Rc::new(scope_slab.insert(global)),
             scopes: Vec::new(),
             scope_slab,
         }
     }
 
-    fn scope(&self, index: usize) -> &EnvMapType {
-        self.scope_slab.get(index).unwrap()
+    fn scope(&self, index: Rc<usize>) -> &EnvMapType {
+        self.scope_slab.get(*index).unwrap()
     }
 
-    fn scope_mut(&mut self, index: usize) -> &mut EnvMapType {
-        self.scope_slab.get_mut(index).unwrap()
+    fn scope_mut(&mut self, index: Rc<usize>) -> &mut EnvMapType {
+        self.scope_slab.get_mut(*index).unwrap()
     }
 
     fn global_scope(&self) -> &EnvMapType {
-        self.scope(self.global_index)
+        self.scope(Rc::clone(&self.global_index))
     }
 
     fn global_scope_mut(&mut self) -> &mut EnvMapType {
-        self.scope_mut(self.global_index)
+        self.scope_mut(Rc::clone(&self.global_index))
     }
 
     pub fn insert(&mut self, key: &str, value: Expr) -> Option<Expr> {
         // TODO: just take a String lmao
         if let Some(last) = self.scopes.last() {
-            self.scope_mut(*last).insert(key.to_string(), value)
+            self.scope_mut(Rc::clone(last))
+                .insert(key.to_string(), value)
         } else {
             self.global_scope_mut().insert(key.to_string(), value)
         }
@@ -101,8 +103,7 @@ impl Env {
             .scopes
             .iter()
             .rev()
-            .copied()
-            .any(|map_index| self.scope(map_index).contains_key(key))
+            .any(|map_index| self.scope(Rc::clone(map_index)).contains_key(key))
         {
             true
         } else {
@@ -125,7 +126,7 @@ impl Env {
     where
         F: FnOnce(&mut Self) -> Result<Expr, SpressoError>,
     {
-        let scope_index = self.scope_slab.insert(EnvMapType::new());
+        let scope_index = Rc::new(self.scope_slab.insert(EnvMapType::new()));
         self.scopes.push(scope_index);
         let res = f(self);
         self.scopes.pop();
@@ -148,9 +149,9 @@ impl Index<&str> for Env {
             .scopes
             .iter()
             .rev()
-            .find(|map_index| self.scope(**map_index).contains_key(key))
+            .find(|map_index| self.scope(Rc::clone(map_index)).contains_key(key))
         {
-            &self.scope(*scope_index)[key]
+            &self.scope(Rc::clone(scope_index))[key]
         } else {
             &self.global_scope()[key]
         }
