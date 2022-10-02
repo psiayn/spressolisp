@@ -66,18 +66,18 @@ impl Env {
         let mut scope_slab = Slab::new();
 
         Env {
-            global_index: Rc::new(scope_slab.insert(global)),
+            global_index: scope_slab.insert(global),
             scopes: Vec::new(),
             scope_slab,
         }
     }
 
     fn scope(&self, index: Rc<usize>) -> &EnvMapType {
-        self.scope_slab.get(*index).unwrap()
+        self.scope_slab.get(index).unwrap().0
     }
 
     fn scope_mut(&mut self, index: Rc<usize>) -> &mut EnvMapType {
-        self.scope_slab.get_mut(*index).unwrap()
+        self.scope_slab.get_mut(index).unwrap().0
     }
 
     fn global_scope(&self) -> &EnvMapType {
@@ -126,7 +126,7 @@ impl Env {
     where
         F: FnOnce(&mut Self) -> Result<Expr, SpressoError>,
     {
-        let scope_index = Rc::new(self.scope_slab.insert(EnvMapType::new()));
+        let scope_index = self.scope_slab.insert(EnvMapType::new());
         self.scopes.push(scope_index);
         let res = f(self);
         self.scopes.pop();
@@ -137,6 +137,10 @@ impl Env {
         for (key, value) in self.global_scope() {
             print!("{}\t:\t{}", key, value);
         }
+    }
+
+    pub fn get_current_scopes(&self) -> Vec<Rc<usize>> {
+        self.scopes.iter().map(|s| Rc::clone(s)).collect()
     }
 }
 

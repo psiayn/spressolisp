@@ -13,7 +13,7 @@ itertools = "0.10.2" # better iterators
 colored = "2"
 # a space to allocate things but we don't need hashing like in a HashMap
 # or ordering like in a BTreeMap
-slab = "0.4.7"
+slab = { path = "../slab" }
 
 [dev-dependencies]
 # benchmarking

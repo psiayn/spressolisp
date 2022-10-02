@@ -1,4 +1,5 @@
 use std::fmt;
+use std::rc::Rc;
 
 use crate::env::Env;
 use crate::errors::{NumericError, SpressoError};
@@ -221,6 +222,7 @@ impl std::ops::Div<Number> for Number {
 pub struct Lambda {
     pub params: Vec<String>,
     pub body: Vec<Expr>,
+    scopes: Vec<Rc<usize>>,
     param_tokens: Vec<Token>,
 }
 
@@ -231,10 +233,11 @@ impl PartialEq for Lambda {
 }
 
 impl Lambda {
-    pub fn new(params: Vec<String>, body: Vec<Expr>) -> Self {
+    pub fn new(params: Vec<String>, body: Vec<Expr>, scopes: Vec<Rc<usize>>) -> Self {
         Self {
             params,
             body,
+            scopes,
             param_tokens: Vec::new(),
         }
     }

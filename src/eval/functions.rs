@@ -6,7 +6,7 @@ use crate::{
     TokenGiver, TokenHoarder,
 };
 
-pub fn lambda(args: Vec<Expr>, _env: &mut Env) -> Result<Expr, SpressoError> {
+pub fn lambda(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
     if args.len() < 2 {
         return Err(SpressoError::from(RuntimeError::from(
             "A lambda definition must have a param list and a body (any number of lists)",
@@ -19,7 +19,8 @@ pub fn lambda(args: Vec<Expr>, _env: &mut Env) -> Result<Expr, SpressoError> {
 
     match fn_params.kind {
         ExprKind::Atom(Atom::Symbol(ref fn_param)) => Ok(ExprKind::Lambda(
-            Lambda::new(vec![fn_param.clone()], body).maybe_with_tokens(fn_params.get_tokens()),
+            Lambda::new(vec![fn_param.clone()], body, env.get_current_scopes())
+                .maybe_with_tokens(fn_params.get_tokens()),
         )
         .into()),
         ExprKind::List(ref fn_params) => {
@@ -39,7 +40,8 @@ pub fn lambda(args: Vec<Expr>, _env: &mut Env) -> Result<Expr, SpressoError> {
                 .collect();
 
             Ok(ExprKind::Lambda(
-                Lambda::new(params?, body).maybe_with_tokens(fn_params.get_tokens()),
+                Lambda::new(params?, body, env.get_current_scopes())
+                    .maybe_with_tokens(fn_params.get_tokens()),
             )
             .into())
         }
