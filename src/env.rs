@@ -1,7 +1,9 @@
 use std::collections::HashMap;
+use std::mem;
 use std::ops::Index;
 use std::rc::Rc;
 
+use log::debug;
 use slab::Slab;
 
 use crate::ast::{Atom, Expr, ExprKind};
@@ -127,9 +129,26 @@ impl Env {
         F: FnOnce(&mut Self) -> Result<Expr, SpressoError>,
     {
         let scope_index = self.scope_slab.insert(EnvMapType::new());
+        debug!("Creating a new scope: {}", scope_index);
         self.scopes.push(scope_index);
         let res = f(self);
         self.scopes.pop();
+        res
+    }
+
+    pub fn in_given_scopes_and_new_scope<F>(
+        &mut self,
+        mut scopes: Vec<Rc<usize>>,
+        f: F,
+    ) -> Result<Expr, SpressoError>
+    where
+        F: FnOnce(&mut Self) -> Result<Expr, SpressoError>,
+    {
+        mem::swap(&mut self.scopes, &mut scopes);
+
+        let res = self.in_new_scope(f);
+
+        mem::swap(&mut self.scopes, &mut scopes);
         res
     }
 

@@ -222,7 +222,7 @@ impl std::ops::Div<Number> for Number {
 pub struct Lambda {
     pub params: Vec<String>,
     pub body: Vec<Expr>,
-    scopes: Vec<Rc<usize>>,
+    pub scopes: Vec<Rc<usize>>,
     param_tokens: Vec<Token>,
 }
 

@@ -72,7 +72,7 @@ pub fn execute_lambda(
         .maybe_with_tokens(args.get_tokens())
         .maybe_with_tokens(lambda.get_tokens()))
     } else {
-        env.in_new_scope(|env| {
+        env.in_given_scopes_and_new_scope(lambda.scopes.clone(), |env| {
             args.into_iter().enumerate().for_each(|(i, arg)| {
                 env.insert(lambda.params[i].as_str(), arg);
             });

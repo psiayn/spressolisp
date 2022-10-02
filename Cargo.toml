@@ -14,6 +14,8 @@ colored = "2"
 # a space to allocate things but we don't need hashing like in a HashMap
 # or ordering like in a BTreeMap
 slab = { path = "../slab" }
+# logs forever
+log = "0.4.17"
 
 [dev-dependencies]
 # benchmarking
