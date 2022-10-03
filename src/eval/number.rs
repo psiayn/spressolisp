@@ -38,11 +38,10 @@ pub fn extract_num(expr: Expr, env: &mut Env) -> Result<Number, SpressoError> {
                     .maybe_with_tokens(expr.get_tokens())),
                 }
             } else {
-                return Err(SpressoError::from(RuntimeError::from(format!(
-                    "Symbol not found: {}",
-                    symbol
-                )))
-                .maybe_with_tokens(expr.get_tokens()));
+                Err(
+                    SpressoError::from(RuntimeError::from(format!("Symbol not found: {}", symbol)))
+                        .maybe_with_tokens(expr.get_tokens()),
+                )
             }
         }
         ExprKind::List(mut exprs) => {
