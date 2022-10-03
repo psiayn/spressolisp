@@ -43,3 +43,5 @@
 //
 // criterion_group!(benches, add_many_1s, add_1s_much_nested);
 // criterion_main!(benches);
+
+fn main() {}
