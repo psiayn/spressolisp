@@ -51,7 +51,7 @@ pub fn execute(exprs: &mut Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoErro
 }
 
 pub fn execute_single(expr: Expr, env: &mut Env) -> Result<Expr, SpressoError> {
-    match expr.kind {
+    let res = match expr.kind {
         ExprKind::Func(func) => func(vec![], env),
         ExprKind::Atom(Atom::Symbol(ref symbol)) => env
             .get_symbol(symbol.as_str())
@@ -59,7 +59,11 @@ pub fn execute_single(expr: Expr, env: &mut Env) -> Result<Expr, SpressoError> {
         ExprKind::List(mut exprs) => execute(&mut exprs, env),
         ExprKind::Lambda(lambda) => execute_lambda(lambda, vec![], env),
         ExprKind::Atom(_) => Ok(expr),
-    }
+    };
+
+    env.cleanup();
+
+    res
 }
 
 pub fn define(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
