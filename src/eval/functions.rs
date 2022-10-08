@@ -86,14 +86,10 @@ pub fn execute_lambda(
 
             let mut last_ok_result = None;
             for result in results {
-                if let Err(err) = result {
-                    // return the first error we encounter
-                    // note that the next expr in body is not executed after this
-                    return Err(err);
-                } else {
-                    // store the last Ok() result we find
-                    last_ok_result = Some(result)
-                }
+                // we store the last Ok() result we find.
+                // this returns the first error we encounter
+                // note that the next expr in body is not executed after this.
+                last_ok_result = Some(Ok(result?));
             }
 
             // return the last Ok() result (will be last expr if everything succeeded), or
