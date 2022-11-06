@@ -17,6 +17,7 @@ pub struct Env {
     global_index: Rc<usize>,
     scopes: Vec<Rc<usize>>,
     scope_slab: Slab<EnvMapType>,
+    gc_enabled: bool,
 }
 
 impl Default for Env {
@@ -71,6 +72,7 @@ impl Env {
             global_index: scope_slab.insert(global),
             scopes: Vec::new(),
             scope_slab,
+            gc_enabled: true,
         }
     }
 
@@ -163,7 +165,13 @@ impl Env {
     }
 
     pub fn cleanup(&mut self) {
-        self.scope_slab.cleanup();
+        if self.gc_enabled {
+            self.scope_slab.cleanup();
+        }
+    }
+
+    pub fn disable_gc(&mut self) {
+        self.gc_enabled = false;
     }
 }
 

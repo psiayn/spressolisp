@@ -25,3 +25,5 @@ jobs:
     - name: Check clippy
       if: ${{ always() }}
       run: cargo clippy --all-targets --all-features -- -D warnings
+    - name: Run memory tests
+      run: cargo test --profile memory-test --test 'mem_test_*' --features memory_test

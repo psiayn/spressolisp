@@ -33,3 +33,17 @@ lisp in rust
   - [ ] reduce
   - [ ] filters
   - etc...?
+
+## Contributing
+
+### Running integration tests
+
+```
+cargo test
+```
+
+### Running memory tests
+
+```
+cargo test --profile memory-test --test 'mem_test_*' --features memory_test
+```

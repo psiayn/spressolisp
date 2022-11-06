@@ -22,7 +22,16 @@ log = "0.4.17"
 criterion = "0.3"
 # for floating point asserts
 assert_float_eq = "1.1.1"
+# memory testing
+dhat = "0.3.2"
 
 [[bench]]
 name = "spresso_benchmark"
 harness = false
+
+[profile.memory-test]
+inherits = "release"
+debug = 1
+
+[features]
+memory_test = []
