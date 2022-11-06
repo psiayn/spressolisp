@@ -161,7 +161,7 @@ impl Env {
     }
 
     pub fn get_current_scopes(&self) -> Vec<Rc<usize>> {
-        self.scopes.iter().map(|s| Rc::clone(s)).collect()
+        self.scopes.iter().map(Rc::clone).collect()
     }
 
     pub fn cleanup(&mut self) {
