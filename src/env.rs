@@ -1,5 +1,10 @@
 use std::collections::HashMap;
+use std::mem;
 use std::ops::Index;
+use std::rc::Rc;
+
+use log::debug;
+use slab::Slab;
 
 use crate::ast::{Atom, Expr, ExprKind};
 
@@ -9,8 +14,10 @@ use crate::eval;
 pub type EnvMapType = HashMap<String, Expr>;
 
 pub struct Env {
-    map: EnvMapType,
-    scopes: Vec<EnvMapType>,
+    global_index: Rc<usize>,
+    scopes: Vec<Rc<usize>>,
+    scope_slab: Slab<EnvMapType>,
+    gc_enabled: bool,
 }
 
 impl Default for Env {
@@ -21,64 +28,90 @@ impl Default for Env {
 
 impl Env {
     pub fn new() -> Self {
-        let mut env = EnvMapType::new();
+        let mut global = EnvMapType::new();
         // arithmetic ops
-        env.insert("+".to_string(), ExprKind::Func(eval::add).into());
-        env.insert("*".to_string(), ExprKind::Func(eval::mul).into());
-        env.insert("-".to_string(), ExprKind::Func(eval::sub).into());
-        env.insert("/".to_string(), ExprKind::Func(eval::div).into());
+        global.insert("+".to_string(), ExprKind::Func(eval::add).into());
+        global.insert("*".to_string(), ExprKind::Func(eval::mul).into());
+        global.insert("-".to_string(), ExprKind::Func(eval::sub).into());
+        global.insert("/".to_string(), ExprKind::Func(eval::div).into());
 
         // keywords
-        env.insert("define".to_string(), ExprKind::Func(eval::define).into());
-        env.insert("print".to_string(), ExprKind::Func(eval::print).into());
-        env.insert("input".to_string(), ExprKind::Func(eval::input).into());
-        env.insert("true".to_string(), ExprKind::Atom(Atom::Bool(true)).into());
-        env.insert(
+        global.insert("define".to_string(), ExprKind::Func(eval::define).into());
+        global.insert("print".to_string(), ExprKind::Func(eval::print).into());
+        global.insert("input".to_string(), ExprKind::Func(eval::input).into());
+        global.insert("true".to_string(), ExprKind::Atom(Atom::Bool(true)).into());
+        global.insert(
             "false".to_string(),
             ExprKind::Atom(Atom::Bool(false)).into(),
         );
-        env.insert("if".to_string(), ExprKind::Func(eval::if_cond).into());
-        env.insert("lambda".to_string(), ExprKind::Func(eval::lambda).into());
-        env.insert("loop".to_string(), ExprKind::Func(eval::while_loop).into());
+        global.insert("if".to_string(), ExprKind::Func(eval::if_cond).into());
+        global.insert("lambda".to_string(), ExprKind::Func(eval::lambda).into());
+        global.insert("loop".to_string(), ExprKind::Func(eval::while_loop).into());
 
         // relational operators
-        env.insert(">".to_string(), ExprKind::Func(eval::gt).into());
-        env.insert("<".to_string(), ExprKind::Func(eval::lt).into());
-        env.insert(">=".to_string(), ExprKind::Func(eval::gteq).into());
-        env.insert("<=".to_string(), ExprKind::Func(eval::lteq).into());
-        env.insert("==".to_string(), ExprKind::Func(eval::eq).into());
-        env.insert("!=".to_string(), ExprKind::Func(eval::neq).into());
+        global.insert(">".to_string(), ExprKind::Func(eval::gt).into());
+        global.insert("<".to_string(), ExprKind::Func(eval::lt).into());
+        global.insert(">=".to_string(), ExprKind::Func(eval::gteq).into());
+        global.insert("<=".to_string(), ExprKind::Func(eval::lteq).into());
+        global.insert("==".to_string(), ExprKind::Func(eval::eq).into());
+        global.insert("!=".to_string(), ExprKind::Func(eval::neq).into());
 
         // logical operators
-        env.insert("not".to_string(), ExprKind::Func(eval::not).into());
-        env.insert("and".to_string(), ExprKind::Func(eval::and).into());
-        env.insert("or".to_string(), ExprKind::Func(eval::or).into());
+        global.insert("not".to_string(), ExprKind::Func(eval::not).into());
+        global.insert("and".to_string(), ExprKind::Func(eval::and).into());
+        global.insert("or".to_string(), ExprKind::Func(eval::or).into());
 
         // lists and their functions
-        env.insert("'".to_string(), ExprKind::Func(eval::list).into());
-        env.insert("map".to_string(), ExprKind::Func(eval::map).into());
-        env.insert("append".to_string(), ExprKind::Func(eval::append).into());
+        global.insert("'".to_string(), ExprKind::Func(eval::list).into());
+        global.insert("map".to_string(), ExprKind::Func(eval::map).into());
+        global.insert("append".to_string(), ExprKind::Func(eval::append).into());
+
+        let mut scope_slab = Slab::new();
 
         Env {
-            map: env,
+            global_index: scope_slab.insert(global),
             scopes: Vec::new(),
+            scope_slab,
+            gc_enabled: true,
         }
+    }
+
+    fn scope(&self, index: Rc<usize>) -> &EnvMapType {
+        self.scope_slab.get(index).unwrap().0
+    }
+
+    fn scope_mut(&mut self, index: Rc<usize>) -> &mut EnvMapType {
+        self.scope_slab.get_mut(index).unwrap().0
+    }
+
+    fn global_scope(&self) -> &EnvMapType {
+        self.scope(Rc::clone(&self.global_index))
+    }
+
+    fn global_scope_mut(&mut self) -> &mut EnvMapType {
+        self.scope_mut(Rc::clone(&self.global_index))
     }
 
     pub fn insert(&mut self, key: &str, value: Expr) -> Option<Expr> {
         // TODO: just take a String lmao
-        if let Some(last) = self.scopes.last_mut() {
-            last.insert(key.to_string(), value)
+        if let Some(last) = self.scopes.last() {
+            self.scope_mut(Rc::clone(last))
+                .insert(key.to_string(), value)
         } else {
-            self.map.insert(key.to_string(), value)
+            self.global_scope_mut().insert(key.to_string(), value)
         }
     }
 
     pub fn contains_key(&self, key: &str) -> bool {
-        if self.scopes.iter().rev().any(|map| map.contains_key(key)) {
+        if self
+            .scopes
+            .iter()
+            .rev()
+            .any(|map_index| self.scope(Rc::clone(map_index)).contains_key(key))
+        {
             true
         } else {
-            self.map.contains_key(key)
+            self.global_scope().contains_key(key)
         }
     }
 
@@ -97,16 +130,48 @@ impl Env {
     where
         F: FnOnce(&mut Self) -> Result<Expr, SpressoError>,
     {
-        self.scopes.push(EnvMapType::new());
+        let scope_index = self.scope_slab.insert(EnvMapType::new());
+        debug!("Creating a new scope: {}", scope_index);
+        self.scopes.push(scope_index);
         let res = f(self);
         self.scopes.pop();
         res
     }
 
+    pub fn in_given_scopes_and_new_scope<F>(
+        &mut self,
+        mut scopes: Vec<Rc<usize>>,
+        f: F,
+    ) -> Result<Expr, SpressoError>
+    where
+        F: FnOnce(&mut Self) -> Result<Expr, SpressoError>,
+    {
+        mem::swap(&mut self.scopes, &mut scopes);
+
+        let res = self.in_new_scope(f);
+
+        mem::swap(&mut self.scopes, &mut scopes);
+        res
+    }
+
     pub fn display(&self) {
-        for (key, value) in &self.map {
+        for (key, value) in self.global_scope() {
             print!("{}\t:\t{}", key, value);
         }
+    }
+
+    pub fn get_current_scopes(&self) -> Vec<Rc<usize>> {
+        self.scopes.iter().map(Rc::clone).collect()
+    }
+
+    pub fn cleanup(&mut self) {
+        if self.gc_enabled {
+            self.scope_slab.cleanup();
+        }
+    }
+
+    pub fn disable_gc(&mut self) {
+        self.gc_enabled = false;
     }
 }
 
@@ -115,10 +180,15 @@ impl Index<&str> for Env {
 
     /// Ensure key exists or I panik!
     fn index(&self, key: &str) -> &Self::Output {
-        if let Some(scope) = self.scopes.iter().rev().find(|map| map.contains_key(key)) {
-            &scope[key]
+        if let Some(scope_index) = self
+            .scopes
+            .iter()
+            .rev()
+            .find(|map_index| self.scope(Rc::clone(map_index)).contains_key(key))
+        {
+            &self.scope(Rc::clone(scope_index))[key]
         } else {
-            &self.map[key]
+            &self.global_scope()[key]
         }
     }
 }
