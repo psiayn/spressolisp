@@ -279,13 +279,13 @@ fn pretty_ast(ast: &Expr, level: usize, f: &mut fmt::Formatter<'_>) -> fmt::Resu
     }
 }
 
-fn print_expr(ast: &Expr, level: usize, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+fn print_expr(ast: &Expr, _level: usize, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match &ast.kind {
         ExprKind::List(list) => {
             write!(f, "[ ").unwrap();
             let hmm = list
                 .iter()
-                .try_for_each(|token| print_expr(token, level + 1, f));
+                .try_for_each(|token| print_expr(token, _level + 1, f));
             write!(f, "] ").unwrap();
             hmm
         }

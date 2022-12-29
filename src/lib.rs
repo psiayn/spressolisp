@@ -97,7 +97,7 @@ fn display_and_mark(f: &mut fmt::Formatter<'_>, tokens: &[Token]) -> fmt::Result
             .entry(program_key)
             .or_insert((Rc::clone(&token.program), BTreeMap::<usize, Ranges>::new()));
 
-        let ranges = line_map.entry(token.line_num).or_insert(Vec::new());
+        let ranges = line_map.entry(token.line_num).or_default();
         ranges.push(token.col_num_start..=token.col_num_end);
     });
 
