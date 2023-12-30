@@ -5,6 +5,7 @@ mod logical;
 mod loops;
 mod number;
 mod relational;
+mod types;
 
 use std::io;
 
@@ -15,6 +16,7 @@ pub use logical::*;
 pub use loops::*;
 pub use number::*;
 pub use relational::*;
+pub use types::*;
 
 use crate::{
     ast::{Atom, Expr, ExprKind},
@@ -40,6 +42,12 @@ pub fn execute(exprs: &mut Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoErro
 
             exprs[0] = value?;
             execute(exprs, env)
+        }
+        ExprKind::Atom(Atom::String(_)) => {
+            Ok(first_arg)
+        }
+        ExprKind::Atom(Atom::Number(_)) => {
+            Ok(first_arg)
         }
         ExprKind::Lambda(lambda) => execute_lambda(lambda, exprs[1..].to_vec(), env),
         _ => Err(SpressoError::from(RuntimeError::from(format!(
@@ -87,8 +95,10 @@ pub fn print(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
     Ok(Expr::from(ExprKind::Atom(Atom::Unit)))
 }
 
-pub fn input(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
-    print(args, env)?;
+pub fn input(_args: Vec<Expr>, _env: &mut Env) -> Result<Expr, SpressoError> {
+    if _args.len() > 0 {
+        print(_args, _env)?;
+    }
     let mut buffer = String::new();
     if let Err(err) = io::stdin().read_line(&mut buffer) {
         return Err(SpressoError::from(RuntimeError::from(format!("{}", err))));

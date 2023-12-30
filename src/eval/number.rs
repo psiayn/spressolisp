@@ -23,9 +23,21 @@ fn number_op(
     .maybe_with_tokens(tokens))
 }
 
+
 pub fn extract_num(expr: Expr, env: &mut Env) -> Result<Number, SpressoError> {
     match expr.kind {
         ExprKind::Atom(Atom::Number(number)) => Ok(number),
+        ExprKind::Atom(Atom::String(str)) => {
+            if let Ok(num) = str.parse::<i64>() {
+                Ok(Number::Int(num))
+            } else if let Ok(num) = str.parse::<f64>() {
+                Ok(Number::Float(num))
+            } else {
+                Err(SpressoError::from(NumericError {
+                        err: "Tried to extract number from string but failed".to_string(),
+                }))
+            }
+        },
         ExprKind::Atom(Atom::Symbol(ref symbol)) => {
             if env.contains_key(symbol.as_str()) {
                 let sym = env[symbol.as_str()].clone();
@@ -48,6 +60,17 @@ pub fn extract_num(expr: Expr, env: &mut Env) -> Result<Number, SpressoError> {
             let res = execute(&mut exprs, env)?;
             match res.kind {
                 ExprKind::Atom(Atom::Number(num)) => Ok(num),
+                ExprKind::Atom(Atom::String(str)) => {
+                    if let Ok(num) = str.parse::<i64>() {
+                        Ok(Number::Int(num))
+                    } else if let Ok(num) = str.parse::<f64>() {
+                        Ok(Number::Float(num))
+                    } else {
+                        Err(SpressoError::from(NumericError {
+                                err: "Tried to extract number from string but failed".to_string(),
+                        }))
+                    }
+                }
                 _ => Err(SpressoError::from(NumericError::from(format!(
                     "trying to perform arithmetic on non-number: {}",
                     res

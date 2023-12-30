@@ -65,6 +65,7 @@ impl Env {
         global.insert("'".to_string(), ExprKind::Func(eval::list).into());
         global.insert("map".to_string(), ExprKind::Func(eval::map).into());
         global.insert("append".to_string(), ExprKind::Func(eval::append).into());
+        global.insert("number".to_string(), ExprKind::Func(eval::cast_as_num).into());
 
         let mut scope_slab = Slab::new();
 
