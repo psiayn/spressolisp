@@ -43,12 +43,6 @@ pub fn execute(exprs: &mut Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoErro
             exprs[0] = value?;
             execute(exprs, env)
         }
-        ExprKind::Atom(Atom::String(_)) => {
-            Ok(first_arg)
-        }
-        ExprKind::Atom(Atom::Number(_)) => {
-            Ok(first_arg)
-        }
         ExprKind::Lambda(lambda) => execute_lambda(lambda, exprs[1..].to_vec(), env),
         _ => Err(SpressoError::from(RuntimeError::from(format!(
             "this is not something I can execute: {}",
