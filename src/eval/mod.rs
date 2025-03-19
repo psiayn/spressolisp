@@ -3,6 +3,7 @@ mod functions;
 mod lists;
 mod logical;
 mod loops;
+mod macros;
 mod number;
 mod relational;
 mod types;
@@ -14,6 +15,7 @@ pub use functions::*;
 pub use lists::*;
 pub use logical::*;
 pub use loops::*;
+pub use macros::*;
 pub use number::*;
 pub use relational::*;
 pub use types::*;
@@ -43,13 +45,13 @@ pub fn execute(exprs: &mut Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoErro
             exprs[0] = value?;
             execute(exprs, env)
         }
-        ExprKind::Atom(Atom::String(_)) => {
-            Ok(first_arg)
-        }
-        ExprKind::Atom(Atom::Number(_)) => {
-            Ok(first_arg)
-        }
         ExprKind::Lambda(lambda) => execute_lambda(lambda, exprs[1..].to_vec(), env),
+        ExprKind::Macro(macro_def) => {
+            // Expand the macro with unevaluated arguments
+            let expanded = expand_macro(&macro_def, exprs[1..].to_vec(), env)?;
+            // Then evaluate the expanded form
+            execute_single(expanded, env)
+        }
         _ => Err(SpressoError::from(RuntimeError::from(format!(
             "this is not something I can execute: {}",
             first_arg
@@ -66,6 +68,12 @@ pub fn execute_single(expr: Expr, env: &mut Env) -> Result<Expr, SpressoError> {
             .maybe_with_tokens(expr.get_tokens()),
         ExprKind::List(mut exprs) => execute(&mut exprs, env),
         ExprKind::Lambda(lambda) => execute_lambda(lambda, vec![], env),
+        ExprKind::Macro(macro_def) => {
+            // Expand the macro with no arguments
+            let expanded = expand_macro(&macro_def, vec![], env)?;
+            // Then evaluate the expanded form
+            execute_single(expanded, env)
+        }
         ExprKind::Atom(_) => Ok(expr),
     };
 
@@ -109,11 +117,8 @@ pub fn input(_args: Vec<Expr>, _env: &mut Env) -> Result<Expr, SpressoError> {
 }
 
 pub fn list(args: Vec<Expr>, _: &mut Env) -> Result<Expr, SpressoError> {
-    if args.len() != 1 {
-        return Err(
-            SpressoError::from(RuntimeError::from("' only needs one arg"))
-                .maybe_with_tokens(args.get_tokens()),
-        );
+    if args.is_empty() {
+        return Ok(ExprKind::List(vec![]).into());
     }
-    Ok(args[0].clone())
+    Ok(ExprKind::List(args).into())
 }

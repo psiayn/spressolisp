@@ -49,7 +49,7 @@ pub fn evaluate_expression(
     Ok(res)
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Program {
     /// Name of the program
     ///
@@ -64,7 +64,7 @@ pub struct Program {
     lines: Vec<String>,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Token {
     text: String,
     // TODO: some tokens like string could go across multiple lines
