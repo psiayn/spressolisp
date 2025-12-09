@@ -221,6 +221,39 @@ impl std::ops::Div<Number> for Number {
     }
 }
 
+impl std::ops::Rem<Number> for Number {
+    type Output = Result<Number, SpressoError>;
+
+    fn rem(self, rhs: Number) -> Self::Output {
+        match rhs {
+            Number::Float(num) => {
+                if num == 0.0 || num == -0.0 {
+                    return Err(NumericError {
+                        err: "Division By Zero".to_string(),
+                    }
+                    .into());
+                }
+                match self {
+                    Number::Float(lhs) => Ok(Number::Float(lhs % num)),
+                    Number::Int(lhs) => Ok(Number::Float(lhs as f64 % num)),
+                }
+            }
+            Number::Int(num) => {
+                if num == 0 {
+                    return Err(NumericError {
+                        err: "Division By Zero".to_string(),
+                    }
+                    .into());
+                }
+                match self {
+                    Number::Float(lhs) => Ok(Number::Float(lhs % num as f64)),
+                    Number::Int(lhs) => Ok(Number::Int(lhs % num)),
+                }
+            }
+        }
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct Lambda {
     pub params: Vec<String>,

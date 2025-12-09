@@ -34,6 +34,7 @@ impl Env {
         global.insert("*".to_string(), ExprKind::Func(eval::mul).into());
         global.insert("-".to_string(), ExprKind::Func(eval::sub).into());
         global.insert("/".to_string(), ExprKind::Func(eval::div).into());
+        global.insert("%".to_string(), ExprKind::Func(eval::r#mod).into());
 
         // keywords
         global.insert("define".to_string(), ExprKind::Func(eval::define).into());
