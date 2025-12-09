@@ -23,13 +23,13 @@ fn test_list_macro() {
 
     // Define a macro that creates a list with duplicated elements
     eval_expr_in_env(
-        "(defmacro duplicate-list (x) (append (list x) (list x)))",
+        "(defmacro duplicate-list (x) (append (list (x)) (list (x))))",
         &mut env,
     );
 
     // Test the macro with a list
     let res = eval_list_expr("(duplicate-list 1)", &mut env);
-    check_list_expr_eq(res, "(list 1 1)");
+    check_list_expr_eq(res, "(list (1 1))");
 }
 
 #[test]
