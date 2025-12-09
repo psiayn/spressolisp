@@ -3,7 +3,7 @@ extern crate assert_float_eq;
 
 pub mod common;
 
-use common::{check_list_expr_eq, eval_list_expr, check_integer_expr_in_env, eval_expr_in_env};
+use common::{check_integer_expr_in_env, check_list_expr_eq, eval_expr_in_env, eval_list_expr};
 use spressolisp::env::Env;
 
 #[test]
@@ -33,11 +33,17 @@ fn test_append_function_on_list() {
 fn test_reduce_function_on_list() {
     let mut env = Env::new();
     // Test sum reduction
-    eval_expr_in_env("(define sum (reduce ('(1 2 3 4 5)) 0 (lambda (acc x) (+ acc x))))", &mut env);
+    eval_expr_in_env(
+        "(define sum (reduce ('(1 2 3 4 5)) 0 (lambda (acc x) (+ acc x))))",
+        &mut env,
+    );
     check_integer_expr_in_env("sum", 15, &mut env);
-    
+
     // Test product reduction
-    eval_expr_in_env("(define product (reduce ('(1 2 3 4 5)) 1 (lambda (acc x) (* acc x))))", &mut env);
+    eval_expr_in_env(
+        "(define product (reduce ('(1 2 3 4 5)) 1 (lambda (acc x) (* acc x))))",
+        &mut env,
+    );
     check_integer_expr_in_env("product", 120, &mut env);
 }
 

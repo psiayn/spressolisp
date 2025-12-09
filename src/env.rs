@@ -48,7 +48,10 @@ impl Env {
         global.insert("if".to_string(), ExprKind::Func(eval::if_cond).into());
         global.insert("lambda".to_string(), ExprKind::Func(eval::lambda).into());
         global.insert("loop".to_string(), ExprKind::Func(eval::while_loop).into());
-        global.insert("defmacro".to_string(), ExprKind::Func(eval::defmacro).into());
+        global.insert(
+            "defmacro".to_string(),
+            ExprKind::Func(eval::defmacro).into(),
+        );
 
         // relational operators
         global.insert(">".to_string(), ExprKind::Func(eval::gt).into());
@@ -65,7 +68,10 @@ impl Env {
 
         // lists and their functions
         global.insert("'".to_string(), ExprKind::Func(eval::spresso_list).into());
-        global.insert("list".to_string(), ExprKind::Func(eval::spresso_list).into());
+        global.insert(
+            "list".to_string(),
+            ExprKind::Func(eval::spresso_list).into(),
+        );
         global.insert("map".to_string(), ExprKind::Func(eval::map).into());
         global.insert("append".to_string(), ExprKind::Func(eval::append).into());
         global.insert("nth".to_string(), ExprKind::Func(eval::nth).into());
@@ -74,13 +80,16 @@ impl Env {
         global.insert("reduce".to_string(), ExprKind::Func(eval::reduce).into());
         global.insert("filter".to_string(), ExprKind::Func(eval::filter).into());
         global.insert("join".to_string(), ExprKind::Func(eval::join).into());
- 
+
         // string functions
         global.insert("split".to_string(), ExprKind::Func(eval::split).into());
         global.insert("concat".to_string(), ExprKind::Func(eval::concat).into());
 
         // type casting
-        global.insert("number".to_string(), ExprKind::Func(eval::cast_as_num).into());
+        global.insert(
+            "number".to_string(),
+            ExprKind::Func(eval::cast_as_num).into(),
+        );
 
         let mut scope_slab = Slab::new();
 

@@ -260,28 +260,33 @@ pub fn filter(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
 
 pub fn join(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
     if args.len() != 1 {
-        return Err(SpressoError::from(RuntimeError::from(
-            "join: needs a single list",
-        ))
-        .maybe_with_tokens(args.get_tokens()));
+        return Err(
+            SpressoError::from(RuntimeError::from("join: needs a single list"))
+                .maybe_with_tokens(args.get_tokens()),
+        );
     }
 
     let list = execute_single(args[0].clone(), env)?;
     if let ExprKind::List(ref lst) = list.kind {
-        let extracted_list = lst.iter().map(|x| if let ExprKind::Atom(Atom::String(str)) = &x.kind {
-            Ok(str.clone())
-        }  else {
-            Err(SpressoError::from(RuntimeError::from(
-                "join: invalid items in list",
-            ))
-            .maybe_with_tokens(x.get_tokens()))
-        }).collect::<Result<Vec<_>, SpressoError>>()?;
+        let extracted_list = lst
+            .iter()
+            .map(|x| {
+                if let ExprKind::Atom(Atom::String(str)) = &x.kind {
+                    Ok(str.clone())
+                } else {
+                    Err(
+                        SpressoError::from(RuntimeError::from("join: invalid items in list"))
+                            .maybe_with_tokens(x.get_tokens()),
+                    )
+                }
+            })
+            .collect::<Result<Vec<_>, SpressoError>>()?;
 
         Ok(ExprKind::Atom(Atom::String(extracted_list.join(""))).into())
     } else {
-        Err(SpressoError::from(RuntimeError::from(
-            "join: argument must be a list",
-        ))
-        .maybe_with_tokens(list.get_tokens()))
+        Err(
+            SpressoError::from(RuntimeError::from("join: argument must be a list"))
+                .maybe_with_tokens(list.get_tokens()),
+        )
     }
 }

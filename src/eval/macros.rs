@@ -34,10 +34,10 @@ pub fn defmacro(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
                 if let ExprKind::Atom(Atom::Symbol(name)) = &param.kind {
                     Ok(name.clone())
                 } else {
-                    Err(SpressoError::from(RuntimeError::from(
-                        "Parameters must be symbols",
-                    ))
-                    .maybe_with_tokens(param.get_tokens()))
+                    Err(
+                        SpressoError::from(RuntimeError::from("Parameters must be symbols"))
+                            .maybe_with_tokens(param.get_tokens()),
+                    )
                 }
             })
             .collect::<Result<Vec<String>, SpressoError>>()?
@@ -66,7 +66,11 @@ pub fn defmacro(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
 }
 
 /// Expand a macro by replacing its parameters with the provided arguments
-pub fn expand_macro(macro_def: &Macro, args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
+pub fn expand_macro(
+    macro_def: &Macro,
+    args: Vec<Expr>,
+    env: &mut Env,
+) -> Result<Expr, SpressoError> {
     if args.len() != macro_def.params.len() {
         return Err(SpressoError::from(RuntimeError::from(format!(
             "Macro expected {} arguments, got {}",
@@ -106,12 +110,10 @@ fn expand_expr(expr: Expr, env: &mut Env) -> Result<Expr, SpressoError> {
                     }
                 }
             }
-            
+
             // Not a macro call, recursively expand each element
-            let expanded: Result<Vec<Expr>, SpressoError> = list
-                .iter()
-                .map(|e| expand_expr(e.clone(), env))
-                .collect();
+            let expanded: Result<Vec<Expr>, SpressoError> =
+                list.iter().map(|e| expand_expr(e.clone(), env)).collect();
             Ok(ExprKind::List(expanded?).into())
         }
         ExprKind::List(list) => Ok(ExprKind::List(list.clone()).into()),
@@ -125,4 +127,4 @@ fn expand_expr(expr: Expr, env: &mut Env) -> Result<Expr, SpressoError> {
         }
         _ => Ok(expr),
     }
-} 
+}
