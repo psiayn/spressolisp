@@ -158,6 +158,16 @@ fn tokenize(program: Rc<Program>) -> VecDeque<Token> {
      -> Option<(String, TokenType)> {
         let mut new_token = String::from(c);
         match c {
+            ';' if chars.peek() == Some(&';') => {
+                // comments!
+                chars.next(); // ignore the next ';'
+
+                // ignore everything until new line
+                let new_chars = chars.peeking_take_while(|c| !matches!(c, '\n'));
+                new_chars.for_each(drop);
+
+                None
+            }
             '(' => {
                 // a () is a unit type
                 if let Some(')') = chars.peek() {
