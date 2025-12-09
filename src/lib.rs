@@ -141,6 +141,7 @@ enum TokenType {
     String,
     Symbol,
     Unit,
+    Quote,
 }
 
 fn tokenize(program: Rc<Program>) -> VecDeque<Token> {
@@ -174,6 +175,7 @@ fn tokenize(program: Rc<Program>) -> VecDeque<Token> {
                 new_token.extend(new_chars);
                 Some((new_token, TokenType::Number))
             }
+            '\'' => Some((new_token, TokenType::Quote)),
             ' ' => {
                 *col_num += 1;
                 None
@@ -262,6 +264,14 @@ fn parse(tokens: &mut VecDeque<Token>) -> Result<Expr, SpressoError> {
 
             Ok(ExprKind::List(ast).into())
         }
+        TokenType::Quote => {
+            let res = parse(tokens)?;
+            Ok(ExprKind::List(vec![
+                ExprKind::Atom(Atom::Symbol("list".to_string())).into(),
+                res,
+            ])
+            .into())
+        }
         TokenType::CloseParen => {
             Err(SpressoError::from(SyntaxError::from("Unexpected ')'")).with_token(token))
         }
@@ -285,14 +295,13 @@ fn parse_atom(token: Token) -> Result<Atom, SpressoError> {
             Err(SpressoError::from(SyntaxError::from("Could not parse number")).with_token(token))
         }
         TokenType::Unit => Ok(Atom::Unit),
-        // remove quotes from string token and store
         TokenType::String => Ok(Atom::String(
             token.text[1..token.text.len() - 1].to_string(),
         )),
         TokenType::Symbol => Ok(Atom::Symbol(token.text)),
-        TokenType::OpenParen | TokenType::CloseParen => Err(SpressoError::from(SyntaxError::from(
-            "Cannot extract atom from these lol",
-        ))
+        TokenType::OpenParen | TokenType::CloseParen | TokenType::Quote => Err(SpressoError::from(
+            SyntaxError::from("Cannot extract atom from these lol"),
+        )
         .with_token(token)),
     }
 }

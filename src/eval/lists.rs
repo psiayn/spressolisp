@@ -84,10 +84,10 @@ pub fn append(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
 /// `(nth list index)`
 pub fn nth(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
     if args.len() != 2 {
-        return Err(SpressoError::from(RuntimeError::from(
-            "nth needs a list and an index",
-        ))
-        .maybe_with_tokens(args.get_tokens()));
+        return Err(
+            SpressoError::from(RuntimeError::from("nth needs a list and an index"))
+                .maybe_with_tokens(args.get_tokens()),
+        );
     }
 
     let list = execute_single(args[0].clone(), env)?;
@@ -105,16 +105,16 @@ pub fn nth(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
             }
             Ok(lst[idx as usize].clone())
         } else {
-            Err(SpressoError::from(RuntimeError::from(
-                "nth: index must be an integer",
-            ))
-            .maybe_with_tokens(index.get_tokens()))
+            Err(
+                SpressoError::from(RuntimeError::from("nth: index must be an integer"))
+                    .maybe_with_tokens(index.get_tokens()),
+            )
         }
     } else {
-        Err(SpressoError::from(RuntimeError::from(
-            "nth: first argument must be a list",
-        ))
-        .maybe_with_tokens(list.get_tokens()))
+        Err(
+            SpressoError::from(RuntimeError::from("nth: first argument must be a list"))
+                .maybe_with_tokens(list.get_tokens()),
+        )
     }
 }
 
@@ -123,10 +123,10 @@ pub fn nth(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
 /// `(rest list)`
 pub fn rest(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
     if args.len() != 1 {
-        return Err(SpressoError::from(RuntimeError::from(
-            "rest needs a list argument",
-        ))
-        .maybe_with_tokens(args.get_tokens()));
+        return Err(
+            SpressoError::from(RuntimeError::from("rest needs a list argument"))
+                .maybe_with_tokens(args.get_tokens()),
+        );
     }
 
     let list = execute_single(args[0].clone(), env)?;
@@ -138,10 +138,10 @@ pub fn rest(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
             Ok(ExprKind::List(lst[1..].to_vec()).into())
         }
     } else {
-        Err(SpressoError::from(RuntimeError::from(
-            "rest: argument must be a list",
-        ))
-        .maybe_with_tokens(list.get_tokens()))
+        Err(
+            SpressoError::from(RuntimeError::from("rest: argument must be a list"))
+                .maybe_with_tokens(list.get_tokens()),
+        )
     }
 }
 
@@ -150,10 +150,10 @@ pub fn rest(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
 /// `(empty? list)`
 pub fn is_empty(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
     if args.len() != 1 {
-        return Err(SpressoError::from(RuntimeError::from(
-            "empty? needs a list argument",
-        ))
-        .maybe_with_tokens(args.get_tokens()));
+        return Err(
+            SpressoError::from(RuntimeError::from("empty? needs a list argument"))
+                .maybe_with_tokens(args.get_tokens()),
+        );
     }
 
     let list = execute_single(args[0].clone(), env)?;
@@ -161,10 +161,10 @@ pub fn is_empty(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
     if let ExprKind::List(ref lst) = list.kind {
         Ok(ExprKind::Atom(Atom::Bool(lst.is_empty())).into())
     } else {
-        Err(SpressoError::from(RuntimeError::from(
-            "empty?: argument must be a list",
-        ))
-        .maybe_with_tokens(list.get_tokens()))
+        Err(
+            SpressoError::from(RuntimeError::from("empty?: argument must be a list"))
+                .maybe_with_tokens(list.get_tokens()),
+        )
     }
 }
 
@@ -191,10 +191,10 @@ pub fn reduce(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
                 functions::execute_lambda(lambda.clone(), vec![acc, elem.clone()], env)
             })
         } else {
-            Err(SpressoError::from(RuntimeError::from(
-                "reduce: first argument must be a list",
-            ))
-            .maybe_with_tokens(list.get_tokens()))
+            Err(
+                SpressoError::from(RuntimeError::from("reduce: first argument must be a list"))
+                    .maybe_with_tokens(list.get_tokens()),
+            )
         }
     } else {
         Err(SpressoError::from(RuntimeError::from(
@@ -225,7 +225,8 @@ pub fn filter(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
             let filtered: Result<Vec<Expr>, SpressoError> = lst
                 .iter()
                 .map(|elem| {
-                    let result = functions::execute_lambda(lambda.clone(), vec![elem.clone()], env)?;
+                    let result =
+                        functions::execute_lambda(lambda.clone(), vec![elem.clone()], env)?;
                     if let ExprKind::Atom(Atom::Bool(keep)) = result.kind {
                         Ok((keep, elem.clone()))
                     } else {
@@ -244,15 +245,43 @@ pub fn filter(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
 
             Ok(ExprKind::List(filtered?).into())
         } else {
-            Err(SpressoError::from(RuntimeError::from(
-                "filter: first argument must be a list",
-            ))
-            .maybe_with_tokens(list.get_tokens()))
+            Err(
+                SpressoError::from(RuntimeError::from("filter: first argument must be a list"))
+                    .maybe_with_tokens(list.get_tokens()),
+            )
         }
     } else {
         Err(SpressoError::from(RuntimeError::from(
             "filter: second argument must be a lambda",
         ))
         .maybe_with_tokens(lambda.get_tokens()))
+    }
+}
+
+pub fn join(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
+    if args.len() != 1 {
+        return Err(SpressoError::from(RuntimeError::from(
+            "join: needs a single list",
+        ))
+        .maybe_with_tokens(args.get_tokens()));
+    }
+
+    let list = execute_single(args[0].clone(), env)?;
+    if let ExprKind::List(ref lst) = list.kind {
+        let extracted_list = lst.iter().map(|x| if let ExprKind::Atom(Atom::String(str)) = &x.kind {
+            Ok(str.clone())
+        }  else {
+            Err(SpressoError::from(RuntimeError::from(
+                "join: invalid items in list",
+            ))
+            .maybe_with_tokens(x.get_tokens()))
+        }).collect::<Result<Vec<_>, SpressoError>>()?;
+
+        Ok(ExprKind::Atom(Atom::String(extracted_list.join(""))).into())
+    } else {
+        Err(SpressoError::from(RuntimeError::from(
+            "join: argument must be a list",
+        ))
+        .maybe_with_tokens(list.get_tokens()))
     }
 }

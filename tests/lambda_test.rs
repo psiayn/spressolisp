@@ -54,7 +54,7 @@ fn test_recursive_list_processing() {
     let mut env = Env::new();
     // Sum all elements in a list recursively
     eval_expr_in_env("(define sum_list (lambda lst (if (empty? lst) 0 (+ (nth lst 0) (sum_list (rest lst))))))", &mut env);
-    check_integer_expr_in_env("(sum_list ('(1 2 3 4 5)))", 15, &mut env);
+    check_integer_expr_in_env("(sum_list '(1 2 3 4 5))", 15, &mut env);
 }
 
 #[test]
