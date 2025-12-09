@@ -6,8 +6,8 @@ mod loops;
 mod macros;
 mod number;
 mod relational;
-mod types;
 mod strings;
+mod types;
 
 use std::io;
 
@@ -19,8 +19,8 @@ pub use loops::*;
 pub use macros::*;
 pub use number::*;
 pub use relational::*;
-pub use types::*;
 pub use strings::*;
+pub use types::*;
 
 use crate::{
     ast::{Atom, Expr, ExprKind},
@@ -140,32 +140,25 @@ pub fn spresso_list(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError
     }
     if args.len() == 1 {
         match &args[0].kind {
-            ExprKind::List(_) => Ok({
-                let inside = args[0].clone();
+            ExprKind::List(list) => Ok({
                 let mut res: Vec<Expr> = Vec::new();
-                if let ExprKind::List(ref list) = inside.kind {
-                    // println!("List: {:?}", list);
-                    if list.len() == 1 {
-                        // println!("single element list ahh moment");
-                        return Ok(list[0].clone())
-                    }
-                    for i in list {
-                        let item_res = execute_single(i.clone(), env)?;
-                        res.push(item_res);
-                    }
+                for i in list {
+                    let item_res = execute_single(i.clone(), env)?;
+                    res.push(item_res);
                 }
-                // println!("WHAT ");
                 ExprKind::List(res).into()
-                // inside
             }),
-            _ => Ok({
-                // let res = execute(&mut bonk, env)?;
-                // println!("HMM");
-                args[0].clone()
-            }),
+            _ => Err(SpressoError::from(RuntimeError::from(format!(
+                "list needs a list. got: {}",
+                args[0]
+            )))
+            .maybe_with_tokens(args.get_tokens())),
         }
     } else {
-        // println!("AHHHH");
-        Ok(ExprKind::List(args).into())
+        Err(SpressoError::from(RuntimeError::from(format!(
+            "list takes only one list argument. got: {:?}",
+            args
+        )))
+        .maybe_with_tokens(args.get_tokens()))
     }
-} 
+}
