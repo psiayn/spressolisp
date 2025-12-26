@@ -19,7 +19,7 @@ log = "0.4.17"
 
 [dev-dependencies]
 # benchmarking
-criterion = "0.3"
+criterion = "0.8"
 # for floating point asserts
 assert_float_eq = "1.1.1"
 # memory testing
