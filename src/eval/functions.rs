@@ -6,7 +6,7 @@ use crate::{
     TokenGiver, TokenHoarder,
 };
 
-pub fn lambda(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
+pub fn lambda(args: &mut [Expr], env: &mut Env) -> Result<Expr, SpressoError> {
     if args.len() < 2 {
         return Err(SpressoError::from(RuntimeError::from(
             "A lambda definition must have a param list and a body (any number of lists)",
@@ -14,13 +14,16 @@ pub fn lambda(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
         .maybe_with_tokens(args.get_tokens()));
     }
 
-    let fn_params = args[0].clone();
-    let body = args[1..].to_vec();
+    let (fn_params, body) = args.split_first_mut().unwrap();
 
     match fn_params.kind {
         ExprKind::Atom(Atom::Symbol(ref fn_param)) => Ok(ExprKind::Lambda(
-            Lambda::new(vec![fn_param.clone()], body, env.get_current_scopes())
-                .maybe_with_tokens(fn_params.get_tokens()),
+            Lambda::new(
+                vec![fn_param.clone()],
+                body.to_vec(),
+                env.get_current_scopes(),
+            )
+            .maybe_with_tokens(fn_params.get_tokens()),
         )
         .into()),
         ExprKind::List(ref fn_params) => {
@@ -40,7 +43,7 @@ pub fn lambda(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
                 .collect();
 
             Ok(ExprKind::Lambda(
-                Lambda::new(params?, body, env.get_current_scopes())
+                Lambda::new(params?, body.to_vec(), env.get_current_scopes())
                     .maybe_with_tokens(fn_params.get_tokens()),
             )
             .into())
@@ -54,7 +57,7 @@ pub fn lambda(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
 
 pub fn execute_lambda(
     lambda: &Lambda,
-    args: Vec<Expr>,
+    args: &mut [Expr],
     env: &mut Env,
 ) -> Result<Expr, SpressoError> {
     let args: Result<Vec<Expr>, SpressoError> = args
@@ -80,9 +83,10 @@ pub fn execute_lambda(
             // execute body
             let results = lambda
                 .body
+                // TODO: no clone
                 .clone()
                 .into_iter()
-                .map(|expr| execute_single(expr, env));
+                .map(|mut expr| execute_single(&mut expr, env));
 
             let mut last_ok_result = None;
             for result in results {

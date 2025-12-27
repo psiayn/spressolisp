@@ -5,15 +5,15 @@ use crate::{
     eval::execute_single,
 };
 
-pub fn and(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
+pub fn and(args: &mut [Expr], env: &mut Env) -> Result<Expr, SpressoError> {
     if args.len() != 2 {
         return Err(SpressoError::from(RuntimeError::from(
             "`and` needs 2 arguments.",
         )));
     }
 
-    let lhs = execute_single(args[0].clone(), env)?;
-    let rhs = execute_single(args[1].clone(), env)?;
+    let lhs = execute_single(&mut args[0], env)?;
+    let rhs = execute_single(&mut args[1], env)?;
     match lhs.kind {
         ExprKind::Atom(Atom::Bool(lhs)) => match rhs.kind {
             ExprKind::Atom(Atom::Bool(rhs)) => Ok(ExprKind::Atom(Atom::Bool(lhs && rhs)).into()),
@@ -27,15 +27,15 @@ pub fn and(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
     }
 }
 
-pub fn or(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
+pub fn or(args: &mut [Expr], env: &mut Env) -> Result<Expr, SpressoError> {
     if args.len() != 2 {
         return Err(SpressoError::from(RuntimeError::from(
             "`or` needs 2 arguments.",
         )));
     }
 
-    let lhs = execute_single(args[0].clone(), env)?;
-    let rhs = execute_single(args[1].clone(), env)?;
+    let lhs = execute_single(&mut args[0], env)?;
+    let rhs = execute_single(&mut args[1], env)?;
     match lhs.kind {
         ExprKind::Atom(Atom::Bool(lhs)) => match rhs.kind {
             ExprKind::Atom(Atom::Bool(rhs)) => Ok(ExprKind::Atom(Atom::Bool(lhs || rhs)).into()),
@@ -49,14 +49,14 @@ pub fn or(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
     }
 }
 
-pub fn not(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
+pub fn not(args: &mut [Expr], env: &mut Env) -> Result<Expr, SpressoError> {
     if args.len() != 1 {
         return Err(SpressoError::from(RuntimeError::from(
             "`not` needs only 1 arguments.",
         )));
     }
 
-    let expr = execute_single(args[0].clone(), env)?;
+    let expr = execute_single(&mut args[0], env)?;
     match expr.kind {
         ExprKind::Atom(Atom::Bool(arg)) => Ok(ExprKind::Atom(Atom::Bool(!arg)).into()),
         _ => Err(SpressoError::from(RuntimeError::from(

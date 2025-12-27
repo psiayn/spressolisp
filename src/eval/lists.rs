@@ -10,7 +10,7 @@ use crate::{
 /// Map function that iterates over a list and applies a lambda over it
 /// # Usage
 /// `(map list lambda)`
-pub fn map(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
+pub fn map(args: &mut [Expr], env: &mut Env) -> Result<Expr, SpressoError> {
     if args.len() < 2 {
         return Err(SpressoError::from(RuntimeError::from(
             "Map should have a list and a lambda to evaluate",
@@ -18,10 +18,10 @@ pub fn map(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
         .maybe_with_tokens(args.get_tokens()));
     }
     // get the list
-    let list = execute_single(args[0].clone(), env)?;
+    let list = execute_single(&mut args[0], env)?;
 
     // get the lambda
-    let lambda = execute_single(args[1].clone(), env)?;
+    let lambda = execute_single(&mut args[1], env)?;
 
     // check if we got a lambda or something else
     if let ExprKind::Lambda(lambda) = lambda.kind {
@@ -29,9 +29,10 @@ pub fn map(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
         if let ExprKind::List(ref list) = list.kind {
             // apply the lambda over every element
             let res: Result<Vec<Expr>, SpressoError> = list
+                // TODO: no clone
                 .clone()
                 .into_iter()
-                .map(|ele| functions::execute_lambda(&lambda, vec![ele], env))
+                .map(|ele| functions::execute_lambda(&lambda, &mut [ele], env))
                 .collect();
             // handle errors and return the result
             Ok(Expr::from(ExprKind::List(res?)))
@@ -49,7 +50,7 @@ pub fn map(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
     }
 }
 
-pub fn append(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
+pub fn append(args: &mut [Expr], env: &mut Env) -> Result<Expr, SpressoError> {
     if args.len() < 2 {
         return Err(
             SpressoError::from(RuntimeError::from("Append should have two lists"))
@@ -57,11 +58,12 @@ pub fn append(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
         );
     }
 
-    let list_1 = execute_single(args[0].clone(), env)?;
-    let list_2 = execute_single(args[1].clone(), env)?;
+    let list_1 = execute_single(&mut args[0], env)?;
+    let list_2 = execute_single(&mut args[1], env)?;
 
     if let ExprKind::List(ref a) = list_1.kind {
         if let ExprKind::List(mut b) = list_2.kind {
+            // TODO: no clone
             let mut initial_list = a.clone();
             initial_list.append(&mut b);
             Ok(Expr::from(ExprKind::List(initial_list)))
@@ -82,7 +84,7 @@ pub fn append(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
 /// Get an element from a list by index
 /// # Usage
 /// `(nth list index)`
-pub fn nth(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
+pub fn nth(args: &mut [Expr], env: &mut Env) -> Result<Expr, SpressoError> {
     if args.len() != 2 {
         return Err(
             SpressoError::from(RuntimeError::from("nth needs a list and an index"))
@@ -90,10 +92,10 @@ pub fn nth(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
         );
     }
 
-    let list = execute_single(args[0].clone(), env)?;
-    let index = execute_single(args[1].clone(), env)?;
+    let list = execute_single(&mut args[0], env)?;
+    let index = execute_single(&mut args[1], env)?;
 
-    if let ExprKind::List(ref lst) = list.kind {
+    if let ExprKind::List(mut lst) = list.kind {
         if let ExprKind::Atom(Atom::Number(Number::Int(idx))) = index.kind {
             if idx < 0 || idx as usize >= lst.len() {
                 return Err(SpressoError::from(RuntimeError::from(format!(
@@ -103,7 +105,8 @@ pub fn nth(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
                 )))
                 .maybe_with_tokens(index.get_tokens()));
             }
-            Ok(lst[idx as usize].clone())
+            let expr = lst.swap_remove(idx as usize);
+            Ok(expr)
         } else {
             Err(
                 SpressoError::from(RuntimeError::from("nth: index must be an integer"))
@@ -121,7 +124,7 @@ pub fn nth(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
 /// Get the rest of the list after the first element
 /// # Usage
 /// `(rest list)`
-pub fn rest(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
+pub fn rest(args: &mut [Expr], env: &mut Env) -> Result<Expr, SpressoError> {
     if args.len() != 1 {
         return Err(
             SpressoError::from(RuntimeError::from("rest needs a list argument"))
@@ -129,7 +132,7 @@ pub fn rest(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
         );
     }
 
-    let list = execute_single(args[0].clone(), env)?;
+    let list = execute_single(&mut args[0], env)?;
 
     if let ExprKind::List(ref lst) = list.kind {
         if lst.is_empty() {
@@ -148,7 +151,7 @@ pub fn rest(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
 /// Check if a list is empty
 /// # Usage
 /// `(empty? list)`
-pub fn is_empty(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
+pub fn is_empty(args: &mut [Expr], env: &mut Env) -> Result<Expr, SpressoError> {
     if args.len() != 1 {
         return Err(
             SpressoError::from(RuntimeError::from("empty? needs a list argument"))
@@ -156,7 +159,7 @@ pub fn is_empty(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
         );
     }
 
-    let list = execute_single(args[0].clone(), env)?;
+    let list = execute_single(&mut args[0], env)?;
 
     if let ExprKind::List(ref lst) = list.kind {
         Ok(ExprKind::Atom(Atom::Bool(lst.is_empty())).into())
@@ -172,7 +175,7 @@ pub fn is_empty(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
 /// # Usage
 /// `(reduce list initial_value lambda)`
 /// The lambda should take two arguments: accumulator and current element
-pub fn reduce(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
+pub fn reduce(args: &mut [Expr], env: &mut Env) -> Result<Expr, SpressoError> {
     if args.len() != 3 {
         return Err(SpressoError::from(RuntimeError::from(
             "reduce needs a list, initial value, and a lambda",
@@ -180,15 +183,15 @@ pub fn reduce(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
         .maybe_with_tokens(args.get_tokens()));
     }
 
-    let list = execute_single(args[0].clone(), env)?;
-    let initial = execute_single(args[1].clone(), env)?;
-    let lambda = execute_single(args[2].clone(), env)?;
+    let list = execute_single(&mut args[0], env)?;
+    let initial = execute_single(&mut args[1], env)?;
+    let lambda = execute_single(&mut args[2], env)?;
 
     if let ExprKind::Lambda(lambda) = lambda.kind {
-        if let ExprKind::List(ref lst) = list.kind {
+        if let ExprKind::List(lst) = list.kind {
             // fold over the list using the lambda
-            lst.iter().try_fold(initial, |acc, elem| {
-                functions::execute_lambda(&lambda, vec![acc, elem.clone()], env)
+            lst.into_iter().try_fold(initial, |acc, elem| {
+                functions::execute_lambda(&lambda, &mut [acc, elem], env)
             })
         } else {
             Err(
@@ -208,7 +211,7 @@ pub fn reduce(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
 /// # Usage
 /// `(filter list lambda)`
 /// The lambda should take one argument and return a boolean
-pub fn filter(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
+pub fn filter(args: &mut [Expr], env: &mut Env) -> Result<Expr, SpressoError> {
     if args.len() != 2 {
         return Err(SpressoError::from(RuntimeError::from(
             "filter needs a list and a predicate lambda",
@@ -216,18 +219,20 @@ pub fn filter(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
         .maybe_with_tokens(args.get_tokens()));
     }
 
-    let list = execute_single(args[0].clone(), env)?;
-    let lambda = execute_single(args[1].clone(), env)?;
+    let list = execute_single(&mut args[0], env)?;
+    let lambda = execute_single(&mut args[1], env)?;
 
     if let ExprKind::Lambda(lambda) = lambda.kind {
-        if let ExprKind::List(ref lst) = list.kind {
+        if let ExprKind::List(lst) = list.kind {
             // filter the list using the predicate lambda
             let filtered: Result<Vec<Expr>, SpressoError> = lst
-                .iter()
+                .into_iter()
                 .map(|elem| {
-                    let result = functions::execute_lambda(&lambda, vec![elem.clone()], env)?;
+                    let mut lambda_args = [elem];
+                    let result = functions::execute_lambda(&lambda, &mut lambda_args, env)?;
                     if let ExprKind::Atom(Atom::Bool(keep)) = result.kind {
-                        Ok((keep, elem.clone()))
+                        let [expr] = lambda_args;
+                        Ok((keep, expr))
                     } else {
                         Err(SpressoError::from(RuntimeError::from(
                             "filter: predicate must return a boolean",
@@ -257,7 +262,7 @@ pub fn filter(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
     }
 }
 
-pub fn join(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
+pub fn join(args: &mut [Expr], env: &mut Env) -> Result<Expr, SpressoError> {
     if args.len() != 1 {
         return Err(
             SpressoError::from(RuntimeError::from("join: needs a single list"))
@@ -265,13 +270,13 @@ pub fn join(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
         );
     }
 
-    let list = execute_single(args[0].clone(), env)?;
-    if let ExprKind::List(ref lst) = list.kind {
+    let list = execute_single(&mut args[0], env)?;
+    if let ExprKind::List(lst) = list.kind {
         let extracted_list = lst
-            .iter()
+            .into_iter()
             .map(|x| {
-                if let ExprKind::Atom(Atom::String(str)) = &x.kind {
-                    Ok(str.clone())
+                if let ExprKind::Atom(Atom::String(str)) = x.kind {
+                    Ok(str)
                 } else {
                     Err(
                         SpressoError::from(RuntimeError::from("join: invalid items in list"))

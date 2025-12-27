@@ -5,7 +5,7 @@ use crate::env::Env;
 use crate::errors::{NumericError, SpressoError};
 use crate::{Token, TokenGiver, TokenHoarder};
 
-pub type FuncType = fn(Vec<Expr>, &mut Env) -> Result<Expr, SpressoError>;
+pub type FuncType = fn(&mut [Expr], &mut Env) -> Result<Expr, SpressoError>;
 
 #[derive(Clone, Debug)]
 pub struct Expr {
@@ -64,6 +64,20 @@ impl TokenGiver for Expr {
 }
 
 impl TokenGiver for Vec<Expr> {
+    fn get_tokens(&self) -> Option<Vec<Rc<Token>>> {
+        let mut tokens = Vec::new();
+
+        for expr in self {
+            if let Some(expr_tokens) = expr.get_tokens() {
+                tokens.extend(expr_tokens);
+            }
+        }
+
+        Some(tokens)
+    }
+}
+
+impl TokenGiver for [Expr] {
     fn get_tokens(&self) -> Option<Vec<Rc<Token>>> {
         let mut tokens = Vec::new();
 

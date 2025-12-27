@@ -43,8 +43,8 @@ pub fn evaluate_expression(
 
     let mut res = ExprKind::Atom(Atom::Unit).into();
 
-    for expr in exprs {
-        res = execute_single(expr, env)?;
+    for mut expr in exprs {
+        res = execute_single(&mut expr, env)?;
     }
 
     Ok(res)

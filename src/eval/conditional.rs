@@ -6,25 +6,24 @@ use crate::{
     TokenGiver, TokenHoarder,
 };
 
-pub fn if_cond(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
+pub fn if_cond(args: &mut [Expr], env: &mut Env) -> Result<Expr, SpressoError> {
     if !(args.len() == 2 || args.len() == 3) {
         return Err(SpressoError::from(RuntimeError::from("If statement should have a condition, expression to evaluate when true and optionally an expression to evaluate when false.")).maybe_with_tokens(args.get_tokens()));
     }
 
-    let mut args = args;
-    let cond = args.remove(0);
+    let (cond, args) = args.split_first_mut().unwrap();
 
     let cond = execute_single(cond, env)?;
 
     if let ExprKind::Atom(Atom::Bool(boolean)) = cond.kind {
         if boolean {
             // execute true
-            let true_cond = args.remove(0);
+            let true_cond = &mut args[0];
             execute_single(true_cond, env)
         } else {
             // execute false
             if args.len() > 1 {
-                let false_cond = args.pop().unwrap();
+                let false_cond = &mut args[1];
                 execute_single(false_cond, env)
             } else {
                 Ok(ExprKind::Atom(Atom::Unit).into())

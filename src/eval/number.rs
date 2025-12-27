@@ -7,7 +7,7 @@ use crate::{
 };
 
 fn number_op(
-    args: Vec<Expr>,
+    args: &mut [Expr],
     env: &mut Env,
     init: Number,
     op: fn(Number, Number) -> Result<Number, SpressoError>,
@@ -23,9 +23,9 @@ fn number_op(
     .maybe_with_tokens(tokens))
 }
 
-pub fn extract_num(expr: Expr, env: &mut Env) -> Result<Number, SpressoError> {
-    match expr.kind {
-        ExprKind::Atom(Atom::Number(number)) => Ok(number),
+pub fn extract_num(expr: &mut Expr, env: &mut Env) -> Result<Number, SpressoError> {
+    match &mut expr.kind {
+        ExprKind::Atom(Atom::Number(number)) => Ok(number.clone()),
         ExprKind::Atom(Atom::String(ref str)) => {
             if let Ok(num) = str.parse::<i64>() {
                 Ok(Number::Int(num))
@@ -56,8 +56,8 @@ pub fn extract_num(expr: Expr, env: &mut Env) -> Result<Number, SpressoError> {
                 )
             }
         }
-        ExprKind::List(mut exprs) => {
-            let res = execute(&mut exprs, env)?;
+        ExprKind::List(ref mut exprs) => {
+            let res = execute(exprs, env)?;
             match res.kind {
                 ExprKind::Atom(Atom::Number(num)) => Ok(num),
                 ExprKind::Atom(Atom::String(str)) => {
@@ -86,35 +86,36 @@ pub fn extract_num(expr: Expr, env: &mut Env) -> Result<Number, SpressoError> {
     }
 }
 
-pub fn add(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
+pub fn add(args: &mut [Expr], env: &mut Env) -> Result<Expr, SpressoError> {
     number_op(args, env, Number::Int(0), |x, y| x + y)
 }
 
-pub fn mul(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
+pub fn mul(args: &mut [Expr], env: &mut Env) -> Result<Expr, SpressoError> {
     number_op(args, env, Number::Int(1), |x, y| x * y)
 }
 
-pub fn sub(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
-    let mut args = args;
-    let start = extract_num(args.remove(0), env)?;
+pub fn sub(args: &mut [Expr], env: &mut Env) -> Result<Expr, SpressoError> {
+    // TODO: unwrap
+    let (first, args) = args.split_first_mut().unwrap();
+    let start = extract_num(first, env)?;
     number_op(args, env, start, |x, y| x - y)
 }
 
-pub fn div(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
-    let mut args = args;
-    let start = extract_num(args.remove(0), env)?;
-    // TODO: find a better way instead of cloning
-    match number_op(args.clone(), env, start, |x, y| x / y) {
+pub fn div(args: &mut [Expr], env: &mut Env) -> Result<Expr, SpressoError> {
+    // TODO: unwrap
+    let (first, args) = args.split_first_mut().unwrap();
+    let start = extract_num(first, env)?;
+    match number_op(args, env, start, |x, y| x / y) {
         Err(err) => Err(err.maybe_with_tokens(args.get_tokens())),
         Ok(res) => Ok(res),
     }
 }
 
-pub fn r#mod(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
-    let mut args = args;
-    let start = extract_num(args.remove(0), env)?;
-    // TODO: find a better way instead of cloning
-    match number_op(args.clone(), env, start, |x, y| x % y) {
+pub fn r#mod(args: &mut [Expr], env: &mut Env) -> Result<Expr, SpressoError> {
+    // TODO: unwrap
+    let (first, args) = args.split_first_mut().unwrap();
+    let start = extract_num(first, env)?;
+    match number_op(args, env, start, |x, y| x % y) {
         Err(err) => Err(err.maybe_with_tokens(args.get_tokens())),
         Ok(res) => Ok(res),
     }
