@@ -10,7 +10,7 @@ pub type FuncType = fn(Vec<Expr>, &mut Env) -> Result<Expr, SpressoError>;
 #[derive(Clone, Debug)]
 pub struct Expr {
     pub kind: ExprKind,
-    tokens: Option<Vec<Token>>,
+    tokens: Option<Vec<Rc<Token>>>,
 }
 
 impl PartialEq for Expr {
@@ -32,18 +32,18 @@ impl From<ExprKind> for Expr {
 }
 
 impl TokenHoarder for Expr {
-    fn with_token(mut self, token: Token) -> Self {
+    fn with_token(mut self, token: &Rc<Token>) -> Self {
         if let Some(tokens) = &mut self.tokens {
-            tokens.push(token);
+            tokens.push(Rc::clone(&token));
         } else {
-            self.tokens = Some(vec![token]);
+            self.tokens = Some(vec![Rc::clone(&token)]);
         }
         self
     }
 }
 
 impl TokenGiver for Expr {
-    fn get_tokens(&self) -> Option<Vec<Token>> {
+    fn get_tokens(&self) -> Option<Vec<Rc<Token>>> {
         match &self.kind {
             ExprKind::List(exprs) => exprs.get_tokens(),
             _ => self.tokens.clone(),
@@ -52,7 +52,7 @@ impl TokenGiver for Expr {
 }
 
 impl TokenGiver for Vec<Expr> {
-    fn get_tokens(&self) -> Option<Vec<Token>> {
+    fn get_tokens(&self) -> Option<Vec<Rc<Token>>> {
         let mut tokens = Vec::new();
 
         for expr in self {
@@ -259,7 +259,7 @@ pub struct Lambda {
     pub params: Vec<String>,
     pub body: Vec<Expr>,
     pub scopes: Vec<Rc<usize>>,
-    param_tokens: Vec<Token>,
+    param_tokens: Vec<Rc<Token>>,
 }
 
 impl PartialEq for Lambda {
@@ -282,8 +282,8 @@ impl Lambda {
 /// Note: Lambda itself should only store the tokens of its parameters
 /// Tokens of the body are stored inside the body itself.
 impl TokenHoarder for Lambda {
-    fn with_token(mut self, token: Token) -> Self {
-        self.param_tokens.push(token);
+    fn with_token(mut self, token: &Rc<Token>) -> Self {
+        self.param_tokens.push(Rc::clone(&token));
         self
     }
 }
@@ -291,7 +291,7 @@ impl TokenHoarder for Lambda {
 /// Note: Lambda itself only stores the tokens of its parameters.
 /// Tokens of the body can be retrieved by `lambda.body.get_tokens()`.
 impl TokenGiver for Lambda {
-    fn get_tokens(&self) -> Option<Vec<Token>> {
+    fn get_tokens(&self) -> Option<Vec<Rc<Token>>> {
         Some(self.param_tokens.clone())
     }
 }
@@ -307,7 +307,7 @@ pub struct Macro {
     pub params: Vec<String>,
     pub body: Vec<Expr>,
     pub scopes: Vec<Rc<usize>>,
-    pub param_tokens: Vec<Token>,
+    pub param_tokens: Vec<Rc<Token>>,
 }
 
 impl fmt::Display for Macro {

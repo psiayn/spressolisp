@@ -1,4 +1,4 @@
-use std::fmt;
+use std::{fmt, rc::Rc};
 
 use colored::Colorize;
 
@@ -7,7 +7,7 @@ use crate::{display_and_mark, Token, TokenGiver, TokenHoarder};
 #[derive(Clone)]
 pub struct SpressoError {
     pub detail: SpressoErrorType,
-    tokens: Option<Vec<Token>>,
+    tokens: Option<Vec<Rc<Token>>>,
 }
 
 #[derive(Clone)]
@@ -47,7 +47,8 @@ impl SpressoError {
 }
 
 impl TokenHoarder for SpressoError {
-    fn with_token(mut self, token: Token) -> Self {
+    fn with_token(mut self, token: &Rc<Token>) -> Self {
+        let token = Rc::clone(token);
         match &mut self.tokens {
             Some(tokens) => tokens.push(token),
             None => self.tokens = Some(vec![token]),
@@ -57,7 +58,7 @@ impl TokenHoarder for SpressoError {
 }
 
 impl TokenGiver for SpressoError {
-    fn get_tokens(&self) -> Option<Vec<Token>> {
+    fn get_tokens(&self) -> Option<Vec<Rc<Token>>> {
         self.tokens.clone()
     }
 }
