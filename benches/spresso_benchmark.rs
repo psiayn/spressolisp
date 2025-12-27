@@ -27,7 +27,6 @@ fn criterion_benchmark(c: &mut Criterion) {
                         (define sum (+ sum i))
                         (define i (+ i 1))
                     )))
-                    (print sum)
                     "
                     .to_owned(),
                 ),

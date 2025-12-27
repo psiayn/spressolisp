@@ -29,15 +29,17 @@ use crate::{
     TokenGiver, TokenHoarder,
 };
 
-pub fn execute(exprs: &mut Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
-    let first_arg = exprs[0].clone();
+pub fn execute(exprs: &mut [Expr], env: &mut Env) -> Result<Expr, SpressoError> {
+    let (first, rest) = exprs.split_at_mut(1);
+    let first_arg = &mut first[0];
+
     match first_arg.kind {
-        ExprKind::Func(func) => func(exprs[1..].to_vec(), env),
-        ExprKind::List(mut list) => {
+        ExprKind::Func(func) => func(rest, env),
+        ExprKind::List(ref mut list) => {
             // println!("Execute: List => {:?}", list);
-            let res = execute(&mut list, env)?;
-            let mut evaluated = exprs[1..].to_vec();
-            evaluated.insert(0, res);
+            let res = execute(list, env)?;
+            let mut evaluated = vec![res];
+            evaluated.extend_from_slice(rest);
             execute(&mut evaluated, env)
         }
         ExprKind::Atom(Atom::Symbol(ref symbol)) => {
@@ -65,12 +67,12 @@ pub fn execute(exprs: &mut Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoErro
         //     println!("Execute: Atom: Unit");
         //     Ok(ExprKind::Atom(Atom::Unit).into())
         // }
-        ExprKind::Lambda(lambda) => execute_lambda(lambda, exprs[1..].to_vec(), env),
-        ExprKind::Macro(macro_def) => {
+        ExprKind::Lambda(ref lambda) => execute_lambda(lambda, rest, env),
+        ExprKind::Macro(ref macro_def) => {
             // Expand the macro with unevaluated arguments
-            let expanded = expand_macro(&macro_def, exprs[1..].to_vec(), env)?;
+            let mut expanded = expand_macro(macro_def, rest.to_vec(), env)?;
             // Then evaluate the expanded form
-            execute_single(expanded, env)
+            execute_single(&mut expanded, env)
         }
         _ => Err(SpressoError::from(RuntimeError::from(format!(
             "this is not something I can execute: {}",
@@ -80,21 +82,22 @@ pub fn execute(exprs: &mut Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoErro
     }
 }
 
-pub fn execute_single(expr: Expr, env: &mut Env) -> Result<Expr, SpressoError> {
+pub fn execute_single(expr: &mut Expr, env: &mut Env) -> Result<Expr, SpressoError> {
     let res = match expr.kind {
-        ExprKind::Func(func) => func(vec![], env),
+        ExprKind::Func(func) => func(&mut [], env),
         ExprKind::Atom(Atom::Symbol(ref symbol)) => env
             .get_symbol(symbol.as_str())
             .maybe_with_tokens(expr.get_tokens()),
-        ExprKind::List(mut exprs) => execute(&mut exprs, env),
-        ExprKind::Lambda(lambda) => execute_lambda(lambda, vec![], env),
-        ExprKind::Macro(macro_def) => {
+        ExprKind::List(ref mut exprs) => execute(exprs, env),
+        ExprKind::Lambda(ref lambda) => execute_lambda(&lambda, &mut [], env),
+        ExprKind::Macro(ref macro_def) => {
             // Expand the macro with no arguments
-            let expanded = expand_macro(&macro_def, vec![], env)?;
+            let mut expanded = expand_macro(&macro_def, vec![], env)?;
             // Then evaluate the expanded form
-            execute_single(expanded, env)
+            execute_single(&mut expanded, env)
         }
-        ExprKind::Atom(_) => Ok(expr),
+        // TODO: no clone
+        ExprKind::Atom(_) => Ok(expr.clone()),
     };
 
     env.cleanup();
@@ -102,7 +105,7 @@ pub fn execute_single(expr: Expr, env: &mut Env) -> Result<Expr, SpressoError> {
     res
 }
 
-pub fn define(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
+pub fn define(args: &mut [Expr], env: &mut Env) -> Result<Expr, SpressoError> {
     if args.len() != 2 {
         return Err(SpressoError::from(RuntimeError::from(
             "define needs a variable name and a value to assign to it.",
@@ -110,13 +113,14 @@ pub fn define(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
         .maybe_with_tokens(args.get_tokens()));
     }
 
-    let variable_name = args[0].clone();
-    let result = execute_single(args[1].clone(), env)?.maybe_with_tokens(args.get_tokens());
-    env.insert(variable_name.to_string().trim(), result.clone());
+    let variable_name = args[0].to_string();
+    let result = execute_single(&mut args[1], env)?.maybe_with_tokens(args.get_tokens());
+    // TODO: no clone
+    env.insert(variable_name.trim(), result.clone());
     Ok(result)
 }
 
-pub fn print(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
+pub fn print(args: &mut [Expr], env: &mut Env) -> Result<Expr, SpressoError> {
     for arg in args {
         let result = execute_single(arg, env)?;
         println!("{}", result);
@@ -124,7 +128,7 @@ pub fn print(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
     Ok(Expr::from(ExprKind::Atom(Atom::Unit)))
 }
 
-pub fn input(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
+pub fn input(args: &mut [Expr], env: &mut Env) -> Result<Expr, SpressoError> {
     if !args.is_empty() {
         print(args, env)?;
     }
@@ -136,16 +140,16 @@ pub fn input(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
     Ok(Expr::from(ExprKind::Atom(Atom::String(buffer))))
 }
 
-pub fn spresso_list(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
+pub fn spresso_list(args: &mut [Expr], env: &mut Env) -> Result<Expr, SpressoError> {
     if args.is_empty() {
         return Ok(ExprKind::List(vec![]).into());
     }
     if args.len() == 1 {
-        match &args[0].kind {
+        match &mut args[0].kind {
             ExprKind::List(list) => Ok({
                 let mut res: Vec<Expr> = Vec::new();
                 for i in list {
-                    let item_res = execute_single(i.clone(), env)?;
+                    let item_res = execute_single(i, env)?;
                     res.push(item_res);
                 }
                 ExprKind::List(res).into()

@@ -8,7 +8,7 @@ use crate::{
 /// Define a macro
 /// # Usage
 /// `(defmacro name (params) body)`
-pub fn defmacro(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
+pub fn defmacro(args: &mut [Expr], env: &mut Env) -> Result<Expr, SpressoError> {
     if args.len() < 3 {
         return Err(SpressoError::from(RuntimeError::from(
             "Macro definition needs a name, parameter list, and body",

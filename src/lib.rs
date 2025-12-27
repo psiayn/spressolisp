@@ -1,3 +1,4 @@
+#![warn(clippy::clone_on_ref_ptr)]
 pub mod ast;
 pub mod env;
 pub mod errors;
@@ -42,8 +43,8 @@ pub fn evaluate_expression(
 
     let mut res = ExprKind::Atom(Atom::Unit).into();
 
-    for expr in exprs {
-        res = execute_single(expr, env)?;
+    for mut expr in exprs {
+        res = execute_single(&mut expr, env)?;
     }
 
     Ok(res)
@@ -76,7 +77,7 @@ pub struct Token {
     type_: TokenType,
 }
 
-fn display_and_mark(f: &mut fmt::Formatter<'_>, tokens: &[Token]) -> fmt::Result {
+fn display_and_mark(f: &mut fmt::Formatter<'_>, tokens: &[Rc<Token>]) -> fmt::Result {
     type Ranges = Vec<RangeInclusive<usize>>;
     // we store a mapping of
     // program_ptr => (program,
@@ -254,6 +255,7 @@ fn parse(tokens: &mut VecDeque<Token>) -> Result<Expr, SpressoError> {
         // no tokens (vec was empty)
         None => return Err(SyntaxError::from("Unexpected EOF".to_string()).into()),
     };
+    let token = Rc::new(token);
 
     match token.type_ {
         TokenType::OpenParen => {
@@ -268,7 +270,7 @@ fn parse(tokens: &mut VecDeque<Token>) -> Result<Expr, SpressoError> {
             // there should be a closing ")" after parsing everything inside
             if tokens.pop_front().is_none() {
                 return Err(
-                    SpressoError::from(SyntaxError::from("'(' not closed")).with_token(token)
+                    SpressoError::from(SyntaxError::from("'(' not closed")).with_token(&token)
                 );
             }
 
@@ -283,16 +285,16 @@ fn parse(tokens: &mut VecDeque<Token>) -> Result<Expr, SpressoError> {
             .into())
         }
         TokenType::CloseParen => {
-            Err(SpressoError::from(SyntaxError::from("Unexpected ')'")).with_token(token))
+            Err(SpressoError::from(SyntaxError::from("Unexpected ')'")).with_token(&token))
         }
-        _ => Ok(Expr::from(ExprKind::Atom(parse_atom(token.clone())?)).with_token(token)),
+        _ => Ok(Expr::from(ExprKind::Atom(parse_atom(&token)?)).with_token(&token)),
     }
 }
 
-fn parse_atom(token: Token) -> Result<Atom, SpressoError> {
+fn parse_atom(token: &Rc<Token>) -> Result<Atom, SpressoError> {
     match token.type_ {
         TokenType::Number => {
-            let text = token.text.clone();
+            let text = &token.text;
 
             if let Ok(num) = text.parse::<i64>() {
                 return Ok(Atom::Number(Number::Int(num)));
@@ -308,7 +310,7 @@ fn parse_atom(token: Token) -> Result<Atom, SpressoError> {
         TokenType::String => Ok(Atom::String(
             token.text[1..token.text.len() - 1].to_string(),
         )),
-        TokenType::Symbol => Ok(Atom::Symbol(token.text)),
+        TokenType::Symbol => Ok(Atom::Symbol(token.text.clone())),
         TokenType::OpenParen | TokenType::CloseParen | TokenType::Quote => Err(SpressoError::from(
             SyntaxError::from("Cannot extract atom from these lol"),
         )
@@ -317,20 +319,20 @@ fn parse_atom(token: Token) -> Result<Atom, SpressoError> {
 }
 
 trait TokenHoarder {
-    fn with_token(self, token: Token) -> Self;
+    fn with_token(self, token: &Rc<Token>) -> Self;
 
-    fn with_tokens(mut self, tokens: Vec<Token>) -> Self
+    fn with_tokens(mut self, tokens: Vec<Rc<Token>>) -> Self
     where
         Self: Sized,
     {
         for token in tokens {
-            self = self.with_token(token);
+            self = self.with_token(&token);
         }
 
         self
     }
 
-    fn maybe_with_tokens(self, tokens: Option<Vec<Token>>) -> Self
+    fn maybe_with_tokens(self, tokens: Option<Vec<Rc<Token>>>) -> Self
     where
         Self: Sized,
     {
@@ -348,7 +350,7 @@ where
     T: TokenHoarder,
     E: TokenHoarder,
 {
-    fn with_token(self, token: Token) -> Self {
+    fn with_token(self, token: &Rc<Token>) -> Self {
         match self {
             Ok(val) => Ok(val.with_token(token)),
             Err(err) => Err(err.with_token(token)),
@@ -357,7 +359,7 @@ where
 }
 
 trait TokenGiver {
-    fn get_tokens(&self) -> Option<Vec<Token>>;
+    fn get_tokens(&self) -> Option<Vec<Rc<Token>>>;
 }
 
 // get_tokens should work when both value and error are givers
@@ -366,7 +368,7 @@ where
     T: TokenGiver,
     E: TokenGiver,
 {
-    fn get_tokens(&self) -> Option<Vec<Token>> {
+    fn get_tokens(&self) -> Option<Vec<Rc<Token>>> {
         match self {
             Ok(val) => val.get_tokens(),
             Err(err) => err.get_tokens(),

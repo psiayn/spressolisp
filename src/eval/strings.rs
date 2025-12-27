@@ -6,10 +6,10 @@ use crate::{
     TokenGiver, TokenHoarder,
 };
 
-pub fn split(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
-    match &args[..] {
+pub fn split(args: &mut [Expr], env: &mut Env) -> Result<Expr, SpressoError> {
+    match &mut args[..] {
         [string] => {
-            let input_string = execute_single(string.clone(), env)?;
+            let input_string = execute_single(string, env)?;
             if let ExprKind::Atom(Atom::String(str)) = input_string.kind {
                 Ok(ExprKind::List(
                     str.split("")
@@ -26,8 +26,8 @@ pub fn split(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
             }
         }
         [string, split_pattern] => {
-            let input_string = execute_single(string.clone(), env)?;
-            let split = execute_single(split_pattern.clone(), env)?;
+            let input_string = execute_single(string, env)?;
+            let split = execute_single(split_pattern, env)?;
             if let ExprKind::Atom(Atom::String(str)) = input_string.kind {
                 if let ExprKind::Atom(Atom::String(split_str)) = split.kind {
                     Ok(ExprKind::List(
@@ -57,7 +57,7 @@ pub fn split(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
     }
 }
 
-pub fn concat(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
+pub fn concat(args: &mut [Expr], env: &mut Env) -> Result<Expr, SpressoError> {
     if args.len() < 2 {
         return Err(SpressoError::from(RuntimeError::from(
             "concat should have two strings to concat",
@@ -65,9 +65,9 @@ pub fn concat(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
         .maybe_with_tokens(args.get_tokens());
     }
 
-    let str_1 = execute_single(args[0].clone(), env)?;
+    let str_1 = execute_single(&mut args[0], env)?;
 
-    let str_2 = execute_single(args[1].clone(), env)?;
+    let str_2 = execute_single(&mut args[1], env)?;
 
     if let ExprKind::Atom(Atom::String(first_str)) = str_1.kind {
         if let ExprKind::Atom(Atom::String(second_str)) = str_2.kind {

@@ -27,8 +27,8 @@ fn eval_number_expr_in_env<T>(expr: &str, env: &mut Env, cb: T)
 where
     T: Fn(Number),
 {
-    let res = eval_expr_in_env(expr, env);
-    if let Ok(num) = extract_num(res, env) {
+    let mut res = eval_expr_in_env(expr, env);
+    if let Ok(num) = extract_num(&mut res, env) {
         cb(num)
     } else {
         panic!("Result of '{}' was not a number.", expr);

@@ -6,8 +6,8 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-rustyline = "9.1.0" # for the repl
-home = "0.5.3" # for getting home_dir
+rustyline = "9.1.0"  # for the repl
+home = "0.5.3"       # for getting home_dir
 itertools = "0.10.2" # better iterators
 # colors in terminal
 colored = "2"
@@ -35,3 +35,6 @@ debug = 1
 
 [features]
 memory_test = []
+
+[profile.bench]
+debug = true
