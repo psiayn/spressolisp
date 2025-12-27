@@ -31,7 +31,7 @@ pub fn map(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
             let res: Result<Vec<Expr>, SpressoError> = list
                 .clone()
                 .into_iter()
-                .map(|ele| functions::execute_lambda(lambda.clone(), vec![ele], env))
+                .map(|ele| functions::execute_lambda(&lambda, vec![ele], env))
                 .collect();
             // handle errors and return the result
             Ok(Expr::from(ExprKind::List(res?)))
@@ -188,7 +188,7 @@ pub fn reduce(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
         if let ExprKind::List(ref lst) = list.kind {
             // fold over the list using the lambda
             lst.iter().try_fold(initial, |acc, elem| {
-                functions::execute_lambda(lambda.clone(), vec![acc, elem.clone()], env)
+                functions::execute_lambda(&lambda, vec![acc, elem.clone()], env)
             })
         } else {
             Err(
@@ -225,8 +225,7 @@ pub fn filter(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
             let filtered: Result<Vec<Expr>, SpressoError> = lst
                 .iter()
                 .map(|elem| {
-                    let result =
-                        functions::execute_lambda(lambda.clone(), vec![elem.clone()], env)?;
+                    let result = functions::execute_lambda(&lambda, vec![elem.clone()], env)?;
                     if let ExprKind::Atom(Atom::Bool(keep)) = result.kind {
                         Ok((keep, elem.clone()))
                     } else {

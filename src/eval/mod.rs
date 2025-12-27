@@ -30,14 +30,16 @@ use crate::{
 };
 
 pub fn execute(exprs: &mut Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
-    let first_arg = exprs[0].clone();
+    let (first, rest) = exprs.split_at_mut(1);
+    let first_arg = &mut first[0];
+
     match first_arg.kind {
-        ExprKind::Func(func) => func(exprs[1..].to_vec(), env),
-        ExprKind::List(mut list) => {
+        ExprKind::Func(func) => func(rest.to_vec(), env),
+        ExprKind::List(ref mut list) => {
             // println!("Execute: List => {:?}", list);
-            let res = execute(&mut list, env)?;
-            let mut evaluated = exprs[1..].to_vec();
-            evaluated.insert(0, res);
+            let res = execute(list, env)?;
+            let mut evaluated = vec![res];
+            evaluated.extend_from_slice(rest);
             execute(&mut evaluated, env)
         }
         ExprKind::Atom(Atom::Symbol(ref symbol)) => {
@@ -65,10 +67,10 @@ pub fn execute(exprs: &mut Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoErro
         //     println!("Execute: Atom: Unit");
         //     Ok(ExprKind::Atom(Atom::Unit).into())
         // }
-        ExprKind::Lambda(lambda) => execute_lambda(lambda, exprs[1..].to_vec(), env),
-        ExprKind::Macro(macro_def) => {
+        ExprKind::Lambda(ref lambda) => execute_lambda(lambda, rest.to_vec(), env),
+        ExprKind::Macro(ref macro_def) => {
             // Expand the macro with unevaluated arguments
-            let expanded = expand_macro(&macro_def, exprs[1..].to_vec(), env)?;
+            let expanded = expand_macro(macro_def, rest.to_vec(), env)?;
             // Then evaluate the expanded form
             execute_single(expanded, env)
         }
@@ -87,7 +89,7 @@ pub fn execute_single(expr: Expr, env: &mut Env) -> Result<Expr, SpressoError> {
             .get_symbol(symbol.as_str())
             .maybe_with_tokens(expr.get_tokens()),
         ExprKind::List(mut exprs) => execute(&mut exprs, env),
-        ExprKind::Lambda(lambda) => execute_lambda(lambda, vec![], env),
+        ExprKind::Lambda(lambda) => execute_lambda(&lambda, vec![], env),
         ExprKind::Macro(macro_def) => {
             // Expand the macro with no arguments
             let expanded = expand_macro(&macro_def, vec![], env)?;

@@ -53,7 +53,7 @@ pub fn lambda(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
 }
 
 pub fn execute_lambda(
-    lambda: Lambda,
+    lambda: &Lambda,
     args: Vec<Expr>,
     env: &mut Env,
 ) -> Result<Expr, SpressoError> {
