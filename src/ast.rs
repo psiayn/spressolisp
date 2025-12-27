@@ -34,9 +34,21 @@ impl From<ExprKind> for Expr {
 impl TokenHoarder for Expr {
     fn with_token(mut self, token: &Rc<Token>) -> Self {
         if let Some(tokens) = &mut self.tokens {
-            tokens.push(Rc::clone(&token));
+            tokens.push(Rc::clone(token));
         } else {
-            self.tokens = Some(vec![Rc::clone(&token)]);
+            self.tokens = Some(vec![Rc::clone(token)]);
+        }
+        self
+    }
+
+    fn with_tokens(mut self, new_tokens: Vec<Rc<Token>>) -> Self
+    where
+        Self: Sized,
+    {
+        if let Some(tokens) = &mut self.tokens {
+            tokens.extend(new_tokens);
+        } else {
+            self.tokens = Some(new_tokens);
         }
         self
     }
@@ -283,7 +295,15 @@ impl Lambda {
 /// Tokens of the body are stored inside the body itself.
 impl TokenHoarder for Lambda {
     fn with_token(mut self, token: &Rc<Token>) -> Self {
-        self.param_tokens.push(Rc::clone(&token));
+        self.param_tokens.push(Rc::clone(token));
+        self
+    }
+
+    fn with_tokens(mut self, tokens: Vec<Rc<Token>>) -> Self
+    where
+        Self: Sized,
+    {
+        self.param_tokens.extend(tokens);
         self
     }
 }
