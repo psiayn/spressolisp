@@ -292,7 +292,7 @@ fn parse(tokens: &mut VecDeque<Token>) -> Result<Expr, SpressoError> {
 fn parse_atom(token: &Token) -> Result<Atom, SpressoError> {
     match token.type_ {
         TokenType::Number => {
-            let text = token.text.clone();
+            let text = &token.text;
 
             if let Ok(num) = text.parse::<i64>() {
                 return Ok(Atom::Number(Number::Int(num)));
