@@ -285,11 +285,11 @@ fn parse(tokens: &mut VecDeque<Token>) -> Result<Expr, SpressoError> {
         TokenType::CloseParen => {
             Err(SpressoError::from(SyntaxError::from("Unexpected ')'")).with_token(token))
         }
-        _ => Ok(Expr::from(ExprKind::Atom(parse_atom(&token)?)).with_token(token)),
+        _ => Ok(Expr::from(ExprKind::Atom(parse_atom(token.clone())?)).with_token(token)),
     }
 }
 
-fn parse_atom(token: &Token) -> Result<Atom, SpressoError> {
+fn parse_atom(token: Token) -> Result<Atom, SpressoError> {
     match token.type_ {
         TokenType::Number => {
             let text = token.text.clone();
@@ -302,20 +302,17 @@ fn parse_atom(token: &Token) -> Result<Atom, SpressoError> {
                 return Ok(Atom::Number(Number::Float(num)));
             }
 
-            Err(
-                SpressoError::from(SyntaxError::from("Could not parse number"))
-                    .with_token(token.clone()),
-            )
+            Err(SpressoError::from(SyntaxError::from("Could not parse number")).with_token(token))
         }
         TokenType::Unit => Ok(Atom::Unit),
         TokenType::String => Ok(Atom::String(
             token.text[1..token.text.len() - 1].to_string(),
         )),
-        TokenType::Symbol => Ok(Atom::Symbol(token.text.clone())),
+        TokenType::Symbol => Ok(Atom::Symbol(token.text)),
         TokenType::OpenParen | TokenType::CloseParen | TokenType::Quote => Err(SpressoError::from(
             SyntaxError::from("Cannot extract atom from these lol"),
         )
-        .with_token(token.clone())),
+        .with_token(token)),
     }
 }
 
@@ -344,16 +341,16 @@ trait TokenHoarder {
         }
     }
 
-    // fn maybe_with_token(self, token: Option<Token>) -> Self
-    // where
-    //     Self: Sized,
-    // {
-    //     if let Some(token) = token {
-    //         self.with_token(token)
-    //     } else {
-    //         self
-    //     }
-    // }
+    fn maybe_with_token(self, token: Option<Token>) -> Self
+    where
+        Self: Sized,
+    {
+        if let Some(token) = token {
+            self.with_token(token)
+        } else {
+            self
+        }
+    }
 }
 
 // with_token should work when both value and error are hoarders
