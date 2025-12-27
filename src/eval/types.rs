@@ -14,8 +14,8 @@ pub fn cast_as_num(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError>
         ))
         .maybe_with_tokens(args.get_tokens()));
     }
-    return Ok(Expr::from(ExprKind::Atom(Atom::Number(extract_num(
+    Ok(Expr::from(ExprKind::Atom(Atom::Number(extract_num(
         args[0].clone(),
         env,
-    )?))));
+    )?))))
 }

@@ -340,17 +340,6 @@ trait TokenHoarder {
             self
         }
     }
-
-    fn maybe_with_token(self, token: Option<Token>) -> Self
-    where
-        Self: Sized,
-    {
-        if let Some(token) = token {
-            self.with_token(token)
-        } else {
-            self
-        }
-    }
 }
 
 // with_token should work when both value and error are hoarders

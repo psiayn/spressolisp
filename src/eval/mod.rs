@@ -124,9 +124,9 @@ pub fn print(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
     Ok(Expr::from(ExprKind::Atom(Atom::Unit)))
 }
 
-pub fn input(_args: Vec<Expr>, _env: &mut Env) -> Result<Expr, SpressoError> {
-    if _args.len() > 0 {
-        print(_args, _env)?;
+pub fn input(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
+    if !args.is_empty() {
+        print(args, env)?;
     }
     let mut buffer = String::new();
     if let Err(err) = io::stdin().read_line(&mut buffer) {
