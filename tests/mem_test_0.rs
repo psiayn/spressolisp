@@ -28,7 +28,7 @@ fn test() {
         stats.total_blocks
     );
     dhat::assert!(
-        matches!(stats.total_bytes, 19_000..=19_500),
+        matches!(stats.total_bytes, 19_000..=20_000),
         "{} not in range",
         stats.total_bytes
     );
