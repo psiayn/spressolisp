@@ -3,7 +3,7 @@ extern crate assert_float_eq;
 
 pub mod common;
 
-use common::{check_integer_expr_in_env, check_list_expr_eq, eval_expr_in_env};
+use common::{check_integer_expr_in_env, eval_expr_in_env};
 
 use spressolisp::env::Env;
 
