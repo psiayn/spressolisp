@@ -25,7 +25,7 @@ fn number_op(
 
 pub fn extract_num(expr: &mut Expr, env: &mut Env) -> Result<Number, SpressoError> {
     match &mut expr.kind {
-        ExprKind::Atom(Atom::Number(number)) => Ok(number.clone()),
+        ExprKind::Atom(Atom::Number(number)) => Ok(*number),
         ExprKind::Atom(Atom::String(ref str)) => {
             if let Ok(num) = str.parse::<i64>() {
                 Ok(Number::Int(num))
@@ -40,9 +40,9 @@ pub fn extract_num(expr: &mut Expr, env: &mut Env) -> Result<Number, SpressoErro
         }
         ExprKind::Atom(Atom::Symbol(ref symbol)) => {
             if env.contains_key(symbol.as_str()) {
-                let sym = env[symbol.as_str()].clone();
+                let sym = &env[symbol.as_str()];
                 match sym.kind {
-                    ExprKind::Atom(Atom::Number(num)) => Ok(num),
+                    ExprKind::Atom(Atom::Number(ref num)) => Ok(*num),
                     _ => Err(SpressoError::from(NumericError {
                         err: "Tried to extract num from variable but failed".to_string(),
                     })

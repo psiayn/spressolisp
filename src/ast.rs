@@ -152,7 +152,7 @@ impl fmt::Display for Atom {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, PartialOrd)]
+#[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
 pub enum Number {
     Int(i64),
     Float(f64),
