@@ -117,8 +117,10 @@ pub fn define(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
 }
 
 pub fn print(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
-    let result = execute_single(args[0].clone(), env)?;
-    println!("{}", result);
+    for arg in args {
+        let result = execute_single(arg, env)?;
+        println!("{}", result);
+    }
     Ok(Expr::from(ExprKind::Atom(Atom::Unit)))
 }
 
