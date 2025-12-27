@@ -47,3 +47,20 @@ cargo test
 ```
 cargo test --profile memory-test --test 'mem_test_*' --features memory_test
 ```
+
+### Benchmarking and profiling
+
+Go to main branch and save a baseline:
+```bash
+cargo bench --bench spresso_benchmark -- --save-baseline master
+```
+
+Then in your branch, compare against baseline:
+```bash
+cargo bench --bench spresso_benchmark -- --baseline master
+```
+
+To run profiler on benchmarks using [cargo flamegraph](https://github.com/flamegraph-rs/flamegraph):
+```bash
+cargo flamegraph --bench spresso_benchmark -- --bench --profile-time 5
+```
