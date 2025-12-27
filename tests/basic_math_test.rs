@@ -30,6 +30,14 @@ fn test_division() {
 }
 
 #[test]
+fn test_remainder() {
+    check_integer_expr("(% 10 3)", 1);
+    check_float_expr("(% 10.2 3)", 1.2);
+    check_float_expr("(% 10.2 3.1)", 0.899999999999999);
+    check_float_expr("(% 10 3.1)", 0.6999999999999997);
+}
+
+#[test]
 fn test_wrong_addition_syntax() {
     check_number_syntax_err("(+ 12 32", "'(' not closed");
 }

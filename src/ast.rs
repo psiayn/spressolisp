@@ -71,6 +71,7 @@ pub enum ExprKind {
     List(Vec<Expr>),
     Func(FuncType),
     Lambda(Lambda),
+    Macro(Macro),
 }
 
 impl fmt::Debug for ExprKind {
@@ -80,6 +81,7 @@ impl fmt::Debug for ExprKind {
             Self::List(arg0) => f.debug_tuple("List").field(arg0).finish(),
             Self::Func(_) => f.debug_tuple("Func").finish(),
             Self::Lambda(arg0) => f.debug_tuple("Lambda").field(arg0).finish(),
+            Self::Macro(arg0) => f.debug_tuple("Macro").field(arg0).finish(),
         }
     }
 }
@@ -91,6 +93,7 @@ impl PartialEq for ExprKind {
             (ExprKind::List(l0), ExprKind::List(r0)) => l0 == r0,
             (ExprKind::Func(l0), ExprKind::Func(r0)) => (*l0 as usize) == (*r0 as usize),
             (ExprKind::Lambda(l0), ExprKind::Lambda(r0)) => l0 == r0,
+            (ExprKind::Macro(l0), ExprKind::Macro(r0)) => l0 == r0,
             _ => false,
         }
     }
@@ -218,6 +221,39 @@ impl std::ops::Div<Number> for Number {
     }
 }
 
+impl std::ops::Rem<Number> for Number {
+    type Output = Result<Number, SpressoError>;
+
+    fn rem(self, rhs: Number) -> Self::Output {
+        match rhs {
+            Number::Float(num) => {
+                if num == 0.0 || num == -0.0 {
+                    return Err(NumericError {
+                        err: "Division By Zero".to_string(),
+                    }
+                    .into());
+                }
+                match self {
+                    Number::Float(lhs) => Ok(Number::Float(lhs % num)),
+                    Number::Int(lhs) => Ok(Number::Float(lhs as f64 % num)),
+                }
+            }
+            Number::Int(num) => {
+                if num == 0 {
+                    return Err(NumericError {
+                        err: "Division By Zero".to_string(),
+                    }
+                    .into());
+                }
+                match self {
+                    Number::Float(lhs) => Ok(Number::Float(lhs % num as f64)),
+                    Number::Int(lhs) => Ok(Number::Int(lhs % num)),
+                }
+            }
+        }
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct Lambda {
     pub params: Vec<String>,
@@ -265,6 +301,21 @@ impl fmt::Display for Lambda {
         write!(f, "λ: [{}] -> ...", self.params.join(", "))
     }
 }
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct Macro {
+    pub params: Vec<String>,
+    pub body: Vec<Expr>,
+    pub scopes: Vec<Rc<usize>>,
+    pub param_tokens: Vec<Token>,
+}
+
+impl fmt::Display for Macro {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "Macro: [{}] -> ...", self.params.join(", "))
+    }
+}
+
 #[allow(dead_code)]
 fn pretty_ast(ast: &Expr, level: usize, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match &ast.kind {
@@ -276,6 +327,7 @@ fn pretty_ast(ast: &Expr, level: usize, f: &mut fmt::Formatter<'_>) -> fmt::Resu
         ExprKind::Atom(token) => writeln!(f, "{}{}", "\t".repeat(level), token),
         ExprKind::Func(..) => writeln!(f, "{}built-in function", "\t".repeat(level)),
         ExprKind::Lambda(lambda) => writeln!(f, "{}{}", "\t".repeat(level), lambda),
+        ExprKind::Macro(macro_expr) => writeln!(f, "{}{}", "\t".repeat(level), macro_expr),
     }
 }
 
@@ -292,5 +344,6 @@ fn print_expr(ast: &Expr, _level: usize, f: &mut fmt::Formatter<'_>) -> fmt::Res
         ExprKind::Atom(token) => write!(f, "{} ", token),
         ExprKind::Func(..) => write!(f, "built-in function "),
         ExprKind::Lambda(lambda) => write!(f, "{} ", lambda),
+        ExprKind::Macro(macro_expr) => write!(f, "{} ", macro_expr),
     }
 }

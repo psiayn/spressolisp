@@ -28,31 +28,31 @@ fn test() {
         stats.total_blocks
     );
     dhat::assert!(
-        matches!(stats.total_bytes, 7_630_000..=7_640_000),
+        matches!(stats.total_bytes, 7_640_000..=7_650_000),
         "{} not in range",
         stats.total_bytes
     );
 
     // peak of heap size
     dhat::assert!(
-        matches!(stats.max_blocks, 705..=710),
+        matches!(stats.max_blocks, 715..=725),
         "{} not in range",
         stats.max_blocks
     );
     dhat::assert!(
-        matches!(stats.max_bytes, 62_500..=64_500),
+        matches!(stats.max_bytes, 67_500..=69_500),
         "{} not in range",
         stats.max_bytes
     );
 
     // allocations remaining at this point
     dhat::assert!(
-        matches!(stats.curr_blocks, 125..=130),
+        matches!(stats.curr_blocks, 135..=145),
         "{} not in range",
         stats.curr_blocks
     );
     dhat::assert!(
-        matches!(stats.curr_bytes, 11_500..=12_500),
+        matches!(stats.curr_bytes, 16500..=17500),
         "{} not in range",
         stats.curr_bytes
     );

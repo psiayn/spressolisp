@@ -3,8 +3,10 @@ mod functions;
 mod lists;
 mod logical;
 mod loops;
+mod macros;
 mod number;
 mod relational;
+mod strings;
 mod types;
 
 use std::io;
@@ -14,8 +16,10 @@ pub use functions::*;
 pub use lists::*;
 pub use logical::*;
 pub use loops::*;
+pub use macros::*;
 pub use number::*;
 pub use relational::*;
+pub use strings::*;
 pub use types::*;
 
 use crate::{
@@ -30,12 +34,14 @@ pub fn execute(exprs: &mut Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoErro
     match first_arg.kind {
         ExprKind::Func(func) => func(exprs[1..].to_vec(), env),
         ExprKind::List(mut list) => {
+            // println!("Execute: List => {:?}", list);
             let res = execute(&mut list, env)?;
             let mut evaluated = exprs[1..].to_vec();
             evaluated.insert(0, res);
             execute(&mut evaluated, env)
         }
         ExprKind::Atom(Atom::Symbol(ref symbol)) => {
+            // println!("Execute: Atom: Symbol => {:?}", symbol);
             let value = env
                 .get_symbol(symbol.as_str())
                 .maybe_with_tokens(first_arg.get_tokens());
@@ -43,13 +49,29 @@ pub fn execute(exprs: &mut Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoErro
             exprs[0] = value?;
             execute(exprs, env)
         }
-        ExprKind::Atom(Atom::String(_)) => {
-            Ok(first_arg)
-        }
-        ExprKind::Atom(Atom::Number(_)) => {
-            Ok(first_arg)
-        }
+        // ExprKind::Atom(Atom::String(string)) => {
+        //     println!("Execute: Atom: String => {:?}", string);
+        //     Ok(ExprKind::Atom(Atom::String(string)).into())
+        // }
+        // ExprKind::Atom(Atom::Number(number)) => {
+        //     println!("Execute: Atom: Number => {:?}", number);
+        //     Ok(ExprKind::Atom(Atom::Number(number)).into())
+        // }
+        // ExprKind::Atom(Atom::Bool(bool_val)) => {
+        //     println!("Execute: Atom: Bool => {:?}", bool_val);
+        //     Ok(ExprKind::Atom(Atom::Bool(bool_val)).into())
+        // }
+        // ExprKind::Atom(Atom::Unit) => {
+        //     println!("Execute: Atom: Unit");
+        //     Ok(ExprKind::Atom(Atom::Unit).into())
+        // }
         ExprKind::Lambda(lambda) => execute_lambda(lambda, exprs[1..].to_vec(), env),
+        ExprKind::Macro(macro_def) => {
+            // Expand the macro with unevaluated arguments
+            let expanded = expand_macro(&macro_def, exprs[1..].to_vec(), env)?;
+            // Then evaluate the expanded form
+            execute_single(expanded, env)
+        }
         _ => Err(SpressoError::from(RuntimeError::from(format!(
             "this is not something I can execute: {}",
             first_arg
@@ -66,6 +88,12 @@ pub fn execute_single(expr: Expr, env: &mut Env) -> Result<Expr, SpressoError> {
             .maybe_with_tokens(expr.get_tokens()),
         ExprKind::List(mut exprs) => execute(&mut exprs, env),
         ExprKind::Lambda(lambda) => execute_lambda(lambda, vec![], env),
+        ExprKind::Macro(macro_def) => {
+            // Expand the macro with no arguments
+            let expanded = expand_macro(&macro_def, vec![], env)?;
+            // Then evaluate the expanded form
+            execute_single(expanded, env)
+        }
         ExprKind::Atom(_) => Ok(expr),
     };
 
@@ -96,9 +124,9 @@ pub fn print(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
     Ok(Expr::from(ExprKind::Atom(Atom::Unit)))
 }
 
-pub fn input(_args: Vec<Expr>, _env: &mut Env) -> Result<Expr, SpressoError> {
-    if _args.len() > 0 {
-        print(_args, _env)?;
+pub fn input(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
+    if !args.is_empty() {
+        print(args, env)?;
     }
     let mut buffer = String::new();
     if let Err(err) = io::stdin().read_line(&mut buffer) {
@@ -108,12 +136,31 @@ pub fn input(_args: Vec<Expr>, _env: &mut Env) -> Result<Expr, SpressoError> {
     Ok(Expr::from(ExprKind::Atom(Atom::String(buffer))))
 }
 
-pub fn list(args: Vec<Expr>, _: &mut Env) -> Result<Expr, SpressoError> {
-    if args.len() != 1 {
-        return Err(
-            SpressoError::from(RuntimeError::from("' only needs one arg"))
-                .maybe_with_tokens(args.get_tokens()),
-        );
+pub fn spresso_list(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
+    if args.is_empty() {
+        return Ok(ExprKind::List(vec![]).into());
     }
-    Ok(args[0].clone())
+    if args.len() == 1 {
+        match &args[0].kind {
+            ExprKind::List(list) => Ok({
+                let mut res: Vec<Expr> = Vec::new();
+                for i in list {
+                    let item_res = execute_single(i.clone(), env)?;
+                    res.push(item_res);
+                }
+                ExprKind::List(res).into()
+            }),
+            _ => Err(SpressoError::from(RuntimeError::from(format!(
+                "list needs a list. got: {}",
+                args[0]
+            )))
+            .maybe_with_tokens(args.get_tokens())),
+        }
+    } else {
+        Err(SpressoError::from(RuntimeError::from(format!(
+            "list takes only one list argument. got: {:?}",
+            args
+        )))
+        .maybe_with_tokens(args.get_tokens()))
+    }
 }

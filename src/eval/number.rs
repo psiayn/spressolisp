@@ -23,21 +23,21 @@ fn number_op(
     .maybe_with_tokens(tokens))
 }
 
-
 pub fn extract_num(expr: Expr, env: &mut Env) -> Result<Number, SpressoError> {
     match expr.kind {
         ExprKind::Atom(Atom::Number(number)) => Ok(number),
-        ExprKind::Atom(Atom::String(str)) => {
+        ExprKind::Atom(Atom::String(ref str)) => {
             if let Ok(num) = str.parse::<i64>() {
                 Ok(Number::Int(num))
             } else if let Ok(num) = str.parse::<f64>() {
                 Ok(Number::Float(num))
             } else {
                 Err(SpressoError::from(NumericError {
-                        err: "Tried to extract number from string but failed".to_string(),
-                }))
+                    err: "Tried to extract number from string but failed".to_string(),
+                })
+                .maybe_with_tokens(expr.get_tokens()))
             }
-        },
+        }
         ExprKind::Atom(Atom::Symbol(ref symbol)) => {
             if env.contains_key(symbol.as_str()) {
                 let sym = env[symbol.as_str()].clone();
@@ -67,7 +67,7 @@ pub fn extract_num(expr: Expr, env: &mut Env) -> Result<Number, SpressoError> {
                         Ok(Number::Float(num))
                     } else {
                         Err(SpressoError::from(NumericError {
-                                err: "Tried to extract number from string but failed".to_string(),
+                            err: "Tried to extract number from string but failed".to_string(),
                         }))
                     }
                 }
@@ -105,6 +105,16 @@ pub fn div(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
     let start = extract_num(args.remove(0), env)?;
     // TODO: find a better way instead of cloning
     match number_op(args.clone(), env, start, |x, y| x / y) {
+        Err(err) => Err(err.maybe_with_tokens(args.get_tokens())),
+        Ok(res) => Ok(res),
+    }
+}
+
+pub fn r#mod(args: Vec<Expr>, env: &mut Env) -> Result<Expr, SpressoError> {
+    let mut args = args;
+    let start = extract_num(args.remove(0), env)?;
+    // TODO: find a better way instead of cloning
+    match number_op(args.clone(), env, start, |x, y| x % y) {
         Err(err) => Err(err.maybe_with_tokens(args.get_tokens())),
         Ok(res) => Ok(res),
     }
