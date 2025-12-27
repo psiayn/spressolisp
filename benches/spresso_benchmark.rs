@@ -8,7 +8,7 @@ fn criterion_benchmark(c: &mut Criterion) {
         b.iter(|| {
             evaluate_expression(
                 "bench".to_owned(),
-                black_box("(add 1 1)".to_owned()),
+                black_box("(+ 1 1)".to_owned()),
                 &mut env,
             )
         })
